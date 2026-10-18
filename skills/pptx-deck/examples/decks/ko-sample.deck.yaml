@@ -1,0 +1,62 @@
+# 한국어 덱 예시 — 사용자 지정(custom) 슬라이드 포함. 숫자는 예시값이다.
+meta:
+  title: 문서 검토 자동화 시범 운영
+  author: 발표자 이름
+  audience: 사업부 리더
+  objective: 문서 검토 자동화를 두 팀에서 시범 운영하는 데 합의한다
+  desired_action: 6주 시범 운영 승인
+  language: ko
+
+slides:
+  - layout: cover
+    title: 검토 대기 시간을 줄이는 가장 작은 첫 단계
+    subtitle: 문서 검토 자동화 6주 시범 운영 제안
+    presenter: 발표자 이름
+    date: 2026-10
+    notes: 오늘은 6주 시범 운영 하나만 결정해 주시기를 요청드립니다.
+
+  - layout: stats
+    eyebrow: 현황
+    title: 검토 요청의 절반이 하루 이상 대기합니다
+    stats:
+      - { value: "52%", label: 하루 이상 대기한 요청, detail: 예시값 }
+      - { value: "3.1일", label: 평균 대기 시간, detail: 요청부터 첫 의견까지 }
+      - { value: "4회", label: 평균 왕복 횟수, detail: 승인까지 }
+    highlight: 0
+    source: 예시 데이터
+    notes: 대기 시간이 가장 큰 비용입니다.
+
+  - layout: cards
+    eyebrow: 제안
+    title: 반복 확인 항목은 자동화하고 판단은 사람이 합니다
+    cards:
+      - { heading: 형식 점검, body: 필수 항목과 서식을 제출 즉시 확인합니다 }
+      - { heading: 용어 점검, body: 승인된 용어집과 다른 표현을 표시합니다 }
+      - { heading: 사람 검토, body: 내용 판단과 최종 승인은 담당자가 합니다 }
+    highlight: 2
+    notes: 사람의 판단을 대체하지 않습니다.
+
+  - layout: custom
+    python: custom/gantt.py
+    eyebrow: 일정
+    title: 6주 안에 준비부터 판단까지 마칩니다
+    periods: [1주, 2주, 3주, 4주, 5주, 6주]
+    rows:
+      - { label: 점검 규칙 정리, start: 0, end: 1, done: true }
+      - { label: 두 팀 적용, start: 1, end: 4 }
+      - { label: 결과 측정, start: 3, end: 6 }
+      - { label: 확대 여부 판단, start: 5, end: 6 }
+    today: 1.4
+    today_label: 오늘
+    notes: 6주 차에 확대 여부를 판단합니다.
+
+  - layout: statement
+    eyebrow: 요청
+    text: 두 팀에서 **6주 시범 운영**을 승인해 주십시오.
+    support: 6주 뒤 대기 시간과 왕복 횟수로 결과를 보고드립니다.
+    notes: 요청드리는 결정은 이것 하나입니다.
+
+  - layout: closing
+    title: 감사합니다
+    contact: team@example.com
+    notes: 감사합니다.

@@ -1,0 +1,124 @@
+# Brand profile — the single place where your organization's design lives.
+#
+# Every script and every rule in this skill reads these values. Replace them
+# with your own (or run `scripts/extract_brand.py your-template.pptx` to draft
+# a profile from an existing company deck), then keep `guidelines.md` next to
+# this file for the rules that are not numbers: voice, terminology, approved
+# slide patterns, required disclaimers.
+#
+# Units: points (pt). 1 in = 72 pt. The default canvas is 16:9, 960 x 540 pt
+# (13.333 x 7.5 in). Colors: 6-digit hex without '#'.
+
+name: Neutral Default
+version: 1
+
+canvas:
+  width: 960
+  height: 540
+
+# Optional company template. When `path` is set, the deck is built on top of
+# that file's slide masters (backgrounds, logos, placeholders come from it).
+# `layouts` maps this skill's slide roles to layout names in the template.
+# Run `scripts/extract_brand.py <template.pptx>` to list the available names.
+template:
+  path: null            # e.g. assets/company-template.pptx (relative to this file)
+  use_placeholders: true  # fill the template's title/subtitle placeholders when present
+  draw_backgrounds: false # true = draw `backgrounds` below even on template slides
+  draw_chrome: false      # true = draw footer text, page number and logo even on template slides
+  layouts:
+    cover: null         # e.g. "Title Slide"
+    section: null       # e.g. "Section Header"
+    content: null       # e.g. "Title Only"
+    closing: null
+    blank: null         # e.g. "Blank"
+
+fonts:
+  # `latin` is used for Latin script and digits; `east_asian` for CJK text.
+  # Pick fonts your audience has installed, or embed them in your template.
+  heading: { latin: Arial, east_asian: Malgun Gothic }
+  body:    { latin: Arial, east_asian: Malgun Gothic }
+  mono:    { latin: Consolas, east_asian: Malgun Gothic }
+
+# Type scale in pt. `min` is the smallest readable size anywhere on a slide.
+type:
+  hero: 48        # cover title
+  statement: 36   # one-sentence statement slide
+  section: 32     # section divider title
+  title: 24       # content slide headline (one line)
+  lead: 16        # full-width reading text: lead, prose, key points
+  body: 13        # narrow-column scanning text: cards, tables, columns
+  caption: 11     # captions, sources, legends
+  label: 10       # eyebrow, tags, page number
+  min: 10
+  line_spacing: 1.2         # body paragraphs (multiple of font size)
+  heading_line_spacing: 1.05
+  heading_bold: false       # large size already creates hierarchy
+  eyebrow_uppercase: true
+
+colors:
+  ink: 1F2328          # headlines, primary text
+  body: 3D4450         # body text
+  muted: 5E6672        # small text that must stay readable (>= 4.5:1 on background)
+  chrome: 8C939E       # footer and decoration only — never information
+  line: D9DDE3         # hairlines, table rules
+  surface: FFFFFF      # slide background
+  surface_alt: F4F5F7  # quiet panels
+  accent: 2F5BD3       # eyebrow, rule, the one highlight per slide
+  accent_2: 0F8A7E     # optional second accent; use sparingly
+  on_accent: FFFFFF
+  dark: 141A22         # dark slide background
+  on_dark: FFFFFF
+  on_dark_body: C9D0DA
+  positive: 1A7F4B
+  warning: 9A5B00
+  negative: B3261E
+  # Chart series, in order. The first is the highlight series.
+  series: [2F5BD3, 7A8699, 0F8A7E, B7791F, 8E4EC6]
+
+# Layout grid and the fixed vertical band of every content slide.
+layout:
+  margin_left: 64
+  margin_right: 64
+  gutter: 18            # gap between columns and sibling blocks
+  columns: 12
+  radius: 0             # corner radius for panels (0 = square)
+  eyebrow_y: 34
+  title_y: 50
+  title_h: 34
+  rule_y: 90            # short accent rule under the headline; null to hide
+  rule_w: 42
+  rule_h: 2
+  body_top: 112
+  body_bottom: 466      # content must end here; the band below belongs to the footer
+  footer_y: 506
+
+chrome:
+  footer_text: ""                 # e.g. "© 2026 Example Corp. Confidential"
+  page_numbers: true
+  footer_rule: true
+  logo:
+    path: null                    # e.g. assets/logo.png (relative to this file)
+    path_on_dark: null
+    width: 64
+    position: footer-right        # footer-right | footer-left | top-right
+  cover_logo_width: 96
+
+# Backgrounds for structural slides: a color key above, or an image path.
+backgrounds:
+  cover:   { color: dark, image: null }
+  section: { color: surface_alt, image: null }
+  closing: { color: dark, image: null }
+  content: { color: surface, image: null }
+
+# Text used by structural slides.
+copy:
+  closing_title: Thank you
+  agenda_eyebrow: AGENDA
+  source_label: null    # prefix of source lines; null = "Source" (or "출처" when meta.language is ko)
+  default_language: en
+
+# Icon library: a folder of SVG/PNG files your organization is allowed to use.
+# Search it with `scripts/find_icon.py <keyword>`.
+icons:
+  path: null            # e.g. assets/icons
+  formats: [png, svg]

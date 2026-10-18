@@ -1,0 +1,9 @@
+{
+  "name": "pptx-deck",
+  "version": "0.1.0",
+  "description": "Plan, build and QA native, editable PowerPoint decks in your organization's own design (brand profile + optional company template).",
+  "author": { "name": "pptx-deck-skill contributors" },
+  "license": "MIT",
+  "repository": "https://github.com/jeonghun-app/pptx-deck-skill",
+  "keywords": ["powerpoint", "pptx", "presentation", "slides", "python-pptx", "brand"]
+}

@@ -1,0 +1,207 @@
+# Sample deck spec. Every built-in layout appears at least once
+# (`custom` is shown in ko-sample.deck.yaml).
+# Numbers are illustrative and labeled as such — replace them with sourced data.
+meta:
+  title: Moving release checks earlier
+  author: Presenter Name
+  audience: Engineering managers and team leads
+  objective: Agree to run the automated release checks on every pull request
+  desired_action: Approve a four-week pilot with two teams
+  language: en
+  # brand: ../../brand/brand.yaml   # optional; the CLI flag --brand wins
+
+slides:
+  - layout: cover
+    eyebrow: Engineering review
+    title: Catch release blockers while the change is still small
+    subtitle: A proposal to run release checks on every pull request
+    presenter: Presenter Name
+    role: Platform team
+    date: 2026-10
+    notes: >
+      Today I am asking for one decision: a four-week pilot that moves our
+      release checks from the release branch to every pull request.
+
+  - layout: agenda
+    title: Three questions decide whether the pilot is worth it
+    items:
+      - Where release blockers are found today
+      - What changes when checks run per pull request
+      - What the pilot costs and how we judge it
+    notes: We will answer three questions in order.
+
+  - layout: section
+    number: 1
+    title: Where blockers are found today
+    notes: First, where we find release blockers now.
+
+  - layout: stats
+    eyebrow: Current state
+    title: Most blockers surface only after the branch is cut
+    stats:
+      - value: "71%"
+        label: found on the release branch
+        detail: Illustrative figure for the sample deck
+      - value: "2.4 days"
+        label: median delay per blocker
+        detail: From detection to merged fix
+      - value: "3 of 4"
+        label: blockers trace to one change
+        detail: The rest combine two or more changes
+    highlight: 0
+    source: Illustrative data, sample deck
+    notes: Most blockers appear late, and each one costs more than two days.
+
+  - layout: chart
+    eyebrow: Current state
+    title: The later a blocker is found, the longer the fix takes
+    chart:
+      type: column
+      categories: [Pull request, Main branch, Release branch, Production]
+      series:
+        - name: Median hours to fix
+          values: [3, 9, 31, 58]
+      highlight: 2
+      unit: Median hours to fix
+    takeaway: Fixing on the release branch takes **10x longer** than fixing in the pull request.
+    source: Illustrative data, sample deck
+    notes: The release branch is where the cost jumps.
+
+  - layout: section
+    number: 2
+    title: What changes per pull request
+    notes: Next, what the change looks like.
+
+  - layout: two_column
+    eyebrow: Proposal
+    title: The same checks run earlier, on a smaller change
+    relation: "→"
+    left:
+      heading: Today
+      bullets:
+        - Checks run once, on the release branch
+        - A failure blocks every change in the release
+        - The author has moved on to other work
+    right:
+      heading: Proposed
+      bullets:
+        - Checks run on every pull request
+        - A failure blocks only that change
+        - The author fixes it while the context is fresh
+    notes: Nothing about the checks changes; only when they run.
+
+  - layout: process
+    eyebrow: Proposal
+    title: A pull request passes four gates before merge
+    steps:
+      - title: Build
+        body: Compile and package exactly as the release does
+      - title: Contract tests
+        body: Verify public interfaces against consumers
+      - title: Migration dry run
+        body: Apply schema changes to a production snapshot
+      - title: Review
+        body: Merge only when all three checks pass
+    current: 2
+    notes: The migration dry run is the new gate; the others exist today.
+
+  - layout: diagram
+    eyebrow: Proposal
+    title: Checks run in an isolated runner, never against production
+    grid: { cols: 4, rows: 2 }
+    groups:
+      - { label: CI environment, col: 1, row: 0, colspan: 2, rowspan: 2 }
+    nodes:
+      - { id: pr, label: Pull request, col: 0, row: 0, kind: external }
+      - { id: runner, label: Check runner, sub: isolated, col: 1, row: 0, kind: accent }
+      - { id: snap, label: Snapshot DB, sub: masked copy, col: 2, row: 0, kind: store }
+      - { id: report, label: Check report, col: 1, row: 1 }
+      - { id: merge, label: Merge gate, col: 3, row: 1 }
+    edges:
+      - { from: pr, to: runner, label: on push, highlight: true }
+      - { from: runner, to: snap, label: dry run }
+      - { from: runner, to: report }
+      - { from: report, to: merge, label: pass / fail }
+    caption: The runner reads a masked snapshot; it holds no production credentials.
+    notes: This is the only new infrastructure, and it never touches production.
+
+  - layout: table
+    eyebrow: Cost
+    title: The pilot needs one runner pool and two weeks of setup
+    columns: [Item, Option A — shared pool, Option B — per team]
+    rows:
+      - [Runner capacity, [Shared, 8 parallel jobs], [Dedicated, 4 jobs per team]]
+      - [Setup effort, [2 weeks, one platform engineer], [3 weeks, platform and each team]]
+      - [Monthly cost, [Illustrative low, reuses idle capacity], [Illustrative high, new capacity]]
+      - [Isolation, [Per job, sandboxed runners], [Per team, separate pools]]
+    widths: [1, 2, 2]
+    highlight_col: 1
+    notes: We recommend the shared pool for the pilot.
+
+  - layout: timeline
+    eyebrow: Plan
+    title: Four weeks from setup to a go / no-go decision
+    events:
+      - { date: Week 1, title: Set up runners, body: Shared pool and snapshot job }
+      - { date: Week 2, title: Two teams join, body: Checks are advisory only }
+      - { date: Week 3, title: Checks block merge, body: For the two pilot teams }
+      - { date: Week 4, title: Decide, body: Compare blockers found and time to fix }
+    current: 0
+    notes: The decision point is at the end of week four.
+
+  - layout: bullets
+    eyebrow: Decision
+    title: We judge the pilot on three measures agreed in advance
+    lead: The pilot continues only if the measures improve without slowing merges.
+    bullets:
+      - "**Share of blockers found before merge** — target: a clear majority"
+      - "**Median time to fix** — target: lower than on the release branch"
+      - text: "**Median time to merge** — must not grow by more than a small margin"
+        sub: [Measured on the same two teams, before and during the pilot]
+    notes: These measures are agreed now so the result is not argued afterwards.
+
+  - layout: code
+    eyebrow: Appendix
+    title: Teams opt in with one line in their pipeline file
+    code: |
+      checks:
+        release-gates: enabled   # build, contract tests, migration dry run
+    notes: Opting in is one line.
+
+  - layout: image
+    eyebrow: Appendix
+    title: Each gate can be switched off per repository while teams adopt it
+    image: assets/pipeline-settings.png
+    alt: Pipeline settings screen with one toggle per release gate
+    caption: Wireframe of the pipeline settings screen; one gate is switched off.
+    notes: Teams keep control during the pilot; any gate can be turned off.
+
+  - layout: cards
+    eyebrow: Appendix
+    title: Each role gets something concrete from the pilot
+    cards:
+      - heading: Authors
+        body: A failing check points at their own change, while it is still fresh
+      - heading: Reviewers
+        body: Reviews start from a change that already builds and migrates
+      - heading: Release managers
+        body: Release week stops being the first time the checks run together
+    highlight: 2
+    notes: The biggest relief is for release managers.
+
+  - layout: quote
+    text: We stopped dreading release week once failures arrived one change at a time.
+    attribution: Team lead
+    role: illustrative quote for the sample deck
+    notes: Replace with a real, approved quote or delete the slide.
+
+  - layout: statement
+    eyebrow: The ask
+    text: Approve a **four-week pilot** with two teams.
+    support: We return with the three measures and a go / no-go recommendation.
+    notes: That is the decision I am asking for today.
+
+  - layout: closing
+    subtitle: Questions and discussion
+    contact: platform-team@example.com
+    notes: Thank you.

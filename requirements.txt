@@ -1,0 +1,7 @@
+python-pptx>=1.0
+PyYAML>=6.0
+Pillow>=10.0
+# optional: SVG icons
+# cairosvg>=2.7
+# tests
+pytest>=8.0

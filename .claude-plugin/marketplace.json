@@ -1,0 +1,17 @@
+{
+  "name": "pptx-deck-skill",
+  "owner": {
+    "name": "pptx-deck-skill contributors"
+  },
+  "metadata": {
+    "description": "Skills for generating native, editable PowerPoint decks in your organization's own design.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "pptx-deck",
+      "source": "./",
+      "description": "Brand-driven native PPTX generation (pptx-deck) and layout review (pptx-layout-audit)."
+    }
+  ]
+}

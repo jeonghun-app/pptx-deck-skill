@@ -1,0 +1,46 @@
+# Example of a partial brand profile. Only the keys that differ from the
+# skill's neutral default are listed; everything else is inherited.
+#
+#   python scripts/build_deck.py examples/decks/sample.deck.yaml \
+#     --brand examples/brands/warm-editorial/brand.yaml -o out/sample-warm.pptx
+
+name: Warm Editorial (example)
+
+fonts:
+  heading: { latin: Georgia, east_asian: Malgun Gothic }
+  body:    { latin: Arial, east_asian: Malgun Gothic }
+
+type:
+  title: 26
+  heading_bold: false
+  eyebrow_uppercase: false
+
+colors:
+  ink: 2B2118
+  body: 4A3F35
+  muted: 6B5E52
+  chrome: 9C8F82
+  line: E3DBD1
+  surface: FFFCF7
+  surface_alt: F5EEE4
+  accent: 9C4422
+  accent_2: 2F6B5E
+  dark: 2B2118
+  on_dark_body: E3DBD1
+  series: [9C4422, 9C8F82, 2F6B5E, C9A227, 6B5E52]
+
+layout:
+  radius: 6
+  rule_y: null          # no accent rule under headlines
+
+chrome:
+  footer_text: Example Corp — internal
+  footer_rule: false
+
+backgrounds:
+  cover:   { color: surface_alt, image: null }
+  section: { color: surface, image: null }
+  closing: { color: accent, image: null }
+
+copy:
+  closing_title: Thank you

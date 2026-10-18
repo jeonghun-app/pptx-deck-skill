@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+out/
+audit/
+*.render/
+*.build.json
+~$*.pptx
+.DS_Store
