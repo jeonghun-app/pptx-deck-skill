@@ -184,3 +184,70 @@ def test_mono_role_uses_monospace_face():
         pytest.skip("fontconfig not available")
     measure.set_fonts(load_brand())
     assert measure.text_width("iiii", 10, "mono") == pytest.approx(measure.text_width("MMMM", 10, "mono"), rel=0.05)
+
+
+# -- second review ------------------------------------------------------------
+
+def test_shipped_palette_constant_matches_the_shipped_brand_file():
+    from deckkit import exhibits
+    shipped = Path(__file__).resolve().parents[2] / "brand" / "brand.yaml"
+    data = yaml.safe_load(shipped.read_text(encoding="utf-8"))
+    # if this fails after an intentional palette change, update SHIPPED_SERIES too
+    assert [str(v).upper() for v in data["colors"]["series"]] == exhibits.SHIPPED_SERIES
+
+
+def test_editing_the_brand_file_in_place_keeps_its_palette():
+    from deckkit import exhibits
+    from deckkit.brand import Brand
+    brand = load_brand()
+    edited = Brand({**brand.data, "colors": {**brand.data["colors"], "series": ["C8102E", "00843D"]}},
+                   brand.root)  # same file location as brand/brand.yaml, different palette
+    assert exhibits.series_mode(edited) == "palette"
+    assert exhibits.series_colors(edited, "column", 2)[:2] == ["C8102E", "00843D"]
+
+
+def test_extracted_brand_uses_its_theme_palette(tmp_path):
+    tpl = tmp_path / "t.pptx"
+    Presentation().save(str(tpl))
+    out = tmp_path / "brand" / "brand.yaml"
+    import subprocess
+    subprocess.run([sys.executable, str(SCRIPTS / "extract_brand.py"), str(tpl), "-o", str(out)],
+                   check=True, capture_output=True)
+    assert load_brand(out).get("colors.series_mode") == "palette"
+
+
+@pytest.mark.parametrize("chart", [
+    {"type": "column", "categories": ["a", "b"], "series": [{"name": "s", "values": [1, 2]}],
+     "annotations": {"kind": "ref_line", "value": 2}},
+    {"type": "column", "categories": ["a", "b"], "series": [{"name": "s", "values": [1, 2]}],
+     "annotations": ["ref_line"]},
+    {"panels": {"type": "column"}},
+])
+def test_malformed_annotations_and_panels_are_lint_errors(tmp_path, chart):
+    p = tmp_path / "d.deck.yaml"
+    p.write_text(yaml.safe_dump({"meta": CONTRACT, "slides": [chart_slide(chart)]}), encoding="utf-8")
+    assert any(f["level"] == "ERROR" for f in lint(p))
+
+
+def test_single_string_items_are_one_item_not_characters(tmp_path):
+    prs, _ = deck(tmp_path, [{"layout": "bullets", "title": "A point that closes the argument",
+                              "bullets": ["a"], "notes": "n", "next_steps": {"items": "Pilot"}}])
+    names = [s.name for s in prs.slides[0].shapes]
+    assert names.count("Next step 1") == 1 and "Next step 2" not in names
+    from deckkit.layouts import bullet_items
+    assert bullet_items("alpha") == [("alpha", [])]
+
+
+def test_unquoted_year_gets_an_index_hint(tmp_path):
+    ch = {"type": "column", "categories": [2024, 2025, 2026, 2027],
+          "series": [{"name": "s", "values": [1, 2, 3, 4]}], "highlight": 2026}
+    p = tmp_path / "d.deck.yaml"
+    p.write_text(yaml.safe_dump({"meta": CONTRACT, "slides": [chart_slide(ch)]}), encoding="utf-8")
+    assert any('write "2026"' in f["message"] for f in lint(p))
+
+
+def test_general_format_keeps_small_values():
+    from deckkit import exhibits
+    assert exhibits.format_number(0.0014) == "0.0014"
+    assert exhibits.format_number(0.0145) == "0.0145"
+    assert exhibits.format_number(42.0) == "42"

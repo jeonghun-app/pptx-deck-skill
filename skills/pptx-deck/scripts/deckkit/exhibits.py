@@ -10,7 +10,6 @@ written as a manual inner layout and the value axis is pinned, which makes
 """
 from __future__ import annotations
 
-import functools
 
 import math
 import re
@@ -101,7 +100,17 @@ def footer_paragraphs(src, brand, language: str = "en", extra=()) -> list:
 def chart_specs(spec: dict) -> list:
     """The chart spec of a slide, or each of its panels."""
     ch = spec.get("chart") or {}
-    return list(ch.get("panels") or []) or ([ch] if ch else [])
+    if not isinstance(ch, dict):
+        return []
+    panels = [p for p in panels_of(ch)]
+    return panels or [ch]
+
+
+def panels_of(ch: dict) -> list:
+    """The chart's panels when they are a list of chart specs, else [] (the linter
+    reports any other form)."""
+    panels = ch.get("panels")
+    return panels if isinstance(panels, list) and all(isinstance(p, dict) for p in panels) else []
 
 
 def auto_notes(spec: dict, brand, language: str = "en") -> list:
@@ -152,7 +161,7 @@ def format_number(value, number_format=None) -> str:
     section = fmt.split(";")[0]
     m = _CORE.search(section)
     if fmt == "General" or not m:
-        return str(int(v)) if v.is_integer() else f"{v:.2f}".rstrip("0").rstrip(".")
+        return str(int(v)) if v.is_integer() else f"{v:.10g}"  # Excel's General keeps the digits
     integer = m.group(0).split(".")[0]
     v /= 1000 ** (len(integer) - len(integer.rstrip(",")))  # "#,##0," shows thousands
     if is_percent(section):
@@ -235,13 +244,13 @@ def series_mode(brand) -> str:
     mode = brand.get("colors.series_mode")
     if mode:
         return str(mode)
-    return "ramp" if brand.get("colors.series") == _default_series() else "palette"
+    series = [str(v).lstrip("#").upper() for v in brand.get("colors.series") or []]
+    return "ramp" if series == SHIPPED_SERIES else "palette"
 
 
-@functools.lru_cache(maxsize=1)
-def _default_series():
-    from .brand import load_brand
-    return load_brand().get("colors.series")
+# The palette brand/brand.yaml ships with. Compared as a constant because that file
+# is where an organization edits its own brand.
+SHIPPED_SERIES = ["2F5BD3", "7A8699", "0F8A7E", "B7791F", "8E4EC6"]
 
 
 def default_series_kind(brand, kind: str, n_series: int) -> str:

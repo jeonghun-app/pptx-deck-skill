@@ -312,7 +312,8 @@ annotations:
   - { kind: delta, from: "2024", to: "2026", fmt: pp }        # pp | pct | x | abs, computed
 ```
 
-Categories are referenced by name, or by index when no category has that name.
+Categories are referenced by index (`2`) or by name in quotes (`"2026"`); an
+unquoted number is always an index, so quote years.
 `{value}` in a label is replaced by the computed value in the chart's number
 format; a delta's text is always computed from the plotted values. Callouts
 and deltas sit in lanes above the plot (right of horizontal bars) so they never

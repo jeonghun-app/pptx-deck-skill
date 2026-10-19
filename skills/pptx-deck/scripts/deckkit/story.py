@@ -225,7 +225,10 @@ def _next_steps(c: Canvas, spec: dict) -> tuple[str, list]:
         ns = {"items": [ns]}
     label = ns.get("label") or c.brand.get("copy.next_steps_label") or (
         "시사점" if getattr(c, "language", "en") == "ko" else "What this means")
-    return str(label), [str(item) for item in ns.get("items", [])]
+    items = ns.get("items") or []
+    if isinstance(items, (str, int, float)):  # a single item written without a list
+        items = [items]
+    return str(label), [str(item) for item in items]
 
 
 def _next_steps_geometry(c: Canvas, items: list):

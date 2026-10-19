@@ -183,6 +183,7 @@ def draft(src: Path, out: Path, report: Path | None):
               if colors.get(k)]
     if series:
         b["colors"]["series"] = series[:5]
+        b["colors"]["series_mode"] = "palette"  # the company's own chart colors, in theme order
     if b["colors"].get("accent") and b["colors"].get("surface"):
         ratio = contrast(b["colors"]["accent"], b["colors"]["surface"])
         if ratio < 4.5:

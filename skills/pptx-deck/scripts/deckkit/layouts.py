@@ -174,6 +174,8 @@ def check_bottom(c: Canvas, y_end: float, limit: float):
 
 
 def bullet_items(items):
+    if isinstance(items, (str, int, float)):  # a single item written without a list
+        items = [items]
     out = []
     for item in items or []:
         if isinstance(item, dict):
@@ -588,7 +590,7 @@ def chart(c: Canvas, spec, ctx):
     limit = source_line(c, spec)
     ch = spec.get("chart", {})
     x, w = commentary_column(c, spec, y, limit)
-    if ch.get("panels"):
+    if exhibits.panels_of(ch):
         chart_panels(c, x, y, w, limit - y, ch)
         return
     if ch.get("unit"):

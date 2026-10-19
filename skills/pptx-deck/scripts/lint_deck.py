@@ -55,6 +55,13 @@ def lint_footer(add, i, s, brand, language, width):
         add("WARN", i, f"exhibit footer runs to {lines} lines; keep it to 3 and move detail to the notes")
 
 
+def _index_hint(cats, ref) -> str:
+    """Explain the common case: an unquoted year is read as an index."""
+    if isinstance(ref, int) and not isinstance(ref, bool) and str(ref) in [str(c) for c in cats]:
+        return f" (an unquoted number is an index; write \"{ref}\" to pick the category named {ref})"
+    return ""
+
+
 def _number(value) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
@@ -101,7 +108,7 @@ def lint_chart(add, i, ch, where=""):
         add("WARN", i, f"{where}highlight marks categories of a single series; use highlight_series")
     for ref in marked:
         if exhibits.category_index(cats, ref) is None:
-            add("ERROR", i, f"{where}highlight '{ref}' is not a category")
+            add("ERROR", i, f"{where}highlight '{ref}' is not a category{_index_hint(cats, ref)}")
     for ref in exhibits.as_list(ch.get("highlight_series")):
         if not isinstance(ref, int) or not 0 <= ref < len(series):
             add("ERROR", i, f"{where}highlight_series {ref!r} is not a series index")
@@ -116,8 +123,12 @@ def lint_chart(add, i, ch, where=""):
     if est and kind not in exhibits.ANNOTATED:
         add("ERROR", i, f"{where}estimates work on column, bar and line charts, not '{kind}'")
     elif est and exhibits.category_index(cats, est.get("from")) is None:
-        add("ERROR", i, f"{where}estimates.from '{est.get('from')}' is not a category")
+        add("ERROR", i, f"{where}estimates.from '{est.get('from')}' is not a category"
+                        f"{_index_hint(cats, est.get('from'))}")
     notes = ch.get("annotations") or []
+    if not isinstance(notes, list) or any(not isinstance(a, dict) for a in notes):
+        add("ERROR", i, f"{where}annotations is a list of objects, e.g. [{{kind: ref_line, value: 40}}]")
+        return
     if notes and kind not in exhibits.ANNOTATED:
         add("ERROR", i, f"{where}annotations work on column, bar and line charts, not '{kind}'")
         return
@@ -129,7 +140,7 @@ def lint_chart(add, i, ch, where=""):
         refs = {"band": ("from", "to"), "callout": ("at",), "delta": ("from", "to")}.get(k, ())
         for key in refs:
             if exhibits.category_index(cats, a.get(key)) is None:
-                add("ERROR", i, f"{where}{k} {key} '{a.get(key)}' is not a category")
+                add("ERROR", i, f"{where}{k} {key} '{a.get(key)}' is not a category{_index_hint(cats, a.get(key))}")
         if k == "ref_line" and exhibits.ref_value(a, series) is None:
             add("ERROR", i, f"{where}ref_line value must be a number or 'mean'")
         if k == "delta":
@@ -226,6 +237,9 @@ def lint(deck_path: Path, brand_path=None):
         if name == "chart":
             ch = s.get("chart", {}) or {}
             panels = ch.get("panels") or []
+            if not isinstance(panels, list) or any(not isinstance(p, dict) for p in panels):
+                add("ERROR", i, "chart.panels is a list of chart specs, one per panel")
+                panels = []
             if panels and not 2 <= len(panels) <= 4:
                 add("WARN", i, f"{len(panels)} chart panels; use 2–4 in one row, or split the slide")
             for k, p in enumerate(panels or [ch], start=1):
@@ -340,6 +354,9 @@ def lint_story(slides, meta, brand, add):
             if not isinstance(ns, (list, dict)):
                 add("ERROR", i, "next_steps is a list of items or {label, items: [...]}")
             items = ns if isinstance(ns, list) else (ns.get("items") or [] if isinstance(ns, dict) else None)
+            if isinstance(items, (str, int, float)):
+                add("WARN", i, "next_steps items is a single value; write a list, e.g. items: [First, Second]")
+                items = [items]
             if items is not None and not 2 <= len(items) <= 4:
                 add("WARN", i, f"next_steps has {len(items)} items; keep 2–4")
             if LAYOUTS[name].structural or s.get("full_bleed"):
@@ -349,6 +366,8 @@ def lint_story(slides, meta, brand, add):
             if not 2 <= len(blocks) <= 4:
                 add("WARN", i, f"summary has {len(blocks)} blocks; use 2–4 (one per section) and split the rest")
             for k, blk in enumerate(blocks, start=1):
+                if isinstance(blk, dict) and isinstance(blk.get("points"), (str, int, float)):
+                    add("WARN", i, f"summary block {k} points is a single value; write a list of points")
                 if not isinstance(blk, dict) or blk.get("section") is None:
                     continue
                 if not _number(blk["section"]):

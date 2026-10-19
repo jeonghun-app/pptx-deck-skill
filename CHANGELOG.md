@@ -50,8 +50,10 @@ Visible defaults that differ from 0.1.0, each with its opt-out:
   characters per line (`type.max_measure`); narrow columns are unchanged.
   Opt out with `type.max_measure: null`.
 - Several series on one chart get tints of the accent when the brand keeps the
-  default palette. A brand with its own `colors.series` keeps its palette, as
-  before; set `colors.series_mode: ramp` or `palette` to choose explicitly.
+  shipped default palette. A brand with its own `colors.series` (edited in
+  place or in a separate file) keeps its palette, as before, and
+  `extract_brand.py` writes `series_mode: palette`; set `colors.series_mode:
+  ramp` or `palette` to choose explicitly.
 - Line chart axes span the data (bars still start at zero), so narrow-range
   trends stay readable. Set `min:` / `max:` to fix the axis.
 
@@ -68,8 +70,13 @@ Other changes:
 ### Fixed
 - Numeric category references (`highlight: 3`) always mean the index, as in
   0.1.0; write `"3"` to pick a category named 3.
-- Malformed chart, waterfall, estimate, next-steps and summary keys are
-  reported by the linter instead of stopping the build with a traceback.
+- Malformed chart bounds, waterfall steps, estimates, annotations, panels,
+  next-steps and summary keys are reported by the linter instead of stopping
+  the build with a traceback; a single value where a list is expected is read
+  as one item, never one item per character.
+- An unquoted year used as a category reference explains that numbers are
+  indexes and to quote the year.
+- Chart labels without a number format keep their significant digits.
 - Tracker tabs and other monospace text are measured in the monospace face,
   including faces inside font collections.
 - Language codes such as `ko-KR` select the Korean wording everywhere.
