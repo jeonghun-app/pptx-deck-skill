@@ -1,0 +1,284 @@
+# Exhibit features: structured footers, highlights, series ramps, line end
+# labels, waterfall, estimates, annotations, side commentary and chart panels.
+# Every figure, organization and survey here is invented for illustration.
+meta:
+  title: Exhibit features (illustrative)
+  author: Presenter Name
+  audience: Deck authors learning the exhibit options
+  objective: Show every exhibit option on a slide that uses it for a reason
+  desired_action: Pick the option that makes each chart's point without extra reading
+  language: en
+
+slides:
+  - layout: cover
+    eyebrow: Example deck
+    title: Charts that make their point before anyone reads the legend
+    subtitle: Exhibit options of the chart, table, image and diagram layouts
+    presenter: Presenter Name
+    date: 2026-10
+    notes: >
+      This deck exercises every exhibit option. All numbers, segments and
+      sources are invented for illustration.
+
+  - layout: agenda
+    title: Three kinds of exhibit help, in the order a reader needs them
+    items:
+      - Footers and highlights that say what the numbers are
+      - Annotations that put the headline comparison on the chart
+      - Layouts that place commentary and panels beside the data
+    notes: The deck moves from what a number is, to what it shows, to where it sits.
+
+  - layout: section
+    number: 1
+    title: Say what the numbers are
+    notes: First, footers and color.
+
+  - layout: chart
+    eyebrow: Footer object
+    title: Two in three members in the north would renew their plan
+    survey: true
+    chart:
+      type: column
+      categories: [North, East, South, West]
+      series:
+        - name: Would renew
+          values: [0.66, 0.52, 0.48, 0.41]
+      highlight: North
+      number_format: '0%'
+      unit: Share of respondents who would renew¹⁾, by region
+    source:
+      notes:
+        - Answers "likely" and "very likely" combined.
+      question: How likely are you to renew your plan next year?
+      base: Active members
+      n: {North: 412, East: 388, South: 365, West: 335}
+      as_of: Sep 2026
+      rounding: true
+      text: Illustrative member survey; own analysis
+    notes: >
+      The footer reads top-down: the note on the footnote mark, then the
+      question, base, sample per region and date, then the source.
+
+  - layout: chart
+    eyebrow: Category highlight
+    title: Two plans carry most of the support load
+    chart:
+      type: bar
+      categories: [Team plan, Business plan, Starter plan, Free tier, Education plan]
+      series:
+        - name: Tickets per 1,000 accounts
+          values: [48, 41, 17, 12, 9]
+      highlight: [0, 1]
+      annotations:
+        - { kind: ref_line, value: mean, label: "Average {value}" }
+        - { kind: callout, at: Team plan, text: "Doubled since last year" }
+      unit: Support tickets per 1,000 accounts, last quarter
+    source: Illustrative support data
+    notes: The two highlighted plans sit well above the computed average.
+
+  - layout: chart
+    eyebrow: Series highlight
+    title: Only the annual plan grew in every quarter
+    chart:
+      type: column
+      categories: [Q1, Q2, Q3, Q4]
+      series:
+        - { name: Annual plan, values: [21, 26, 30, 35] }
+        - { name: Monthly plan, values: [30, 28, 31, 29] }
+        - { name: Trial, values: [14, 16, 13, 15] }
+      highlight_series: 0
+      unit: New subscriptions, thousands
+    source: Illustrative sales data
+    notes: The focus series is in the accent; the others step back in grey.
+
+  - layout: chart
+    eyebrow: Ordered series
+    title: Larger accounts now make up half of revenue
+    chart:
+      type: stacked_bar
+      categories: ["2024", "2025", "2026"]
+      series:
+        - { name: Large, values: [0.36, 0.43, 0.50] }
+        - { name: Mid-size, values: [0.34, 0.32, 0.29] }
+        - { name: Small, values: [0.30, 0.25, 0.21] }
+      number_format: '0%'
+      unit: Share of revenue by account size
+    commentary:
+      text: Account size is **ordered**, so the series share one hue from dark to light.
+    source: Illustrative revenue data
+    notes: An ordered ramp tells the reader the segments have an order.
+
+  - layout: section
+    number: 2
+    title: Put the comparison on the chart
+    notes: Next, annotations.
+
+  - layout: chart
+    eyebrow: End labels and estimates
+    title: The north stays ahead even in the forecast years
+    chart:
+      type: line
+      categories: ["2021", "2022", "2023", "2024", "2025", "2026", "2027"]
+      series:
+        - { name: North, values: [31, 34, 38, 41, 45, 48, 51] }
+        - { name: East, values: [28, 29, 31, 33, 34, 36, 37] }
+        - { name: South, values: [25, 27, 26, 29, 31, 32, 34] }
+        - { name: West, values: [22, 24, 25, 25, 27, 29, 30] }
+      highlight_series: 0
+      estimates: { from: "2026", suffix: e }
+      annotations:
+        - { kind: band, from: "2026", to: "2027", label: Forecast }
+        - { kind: ref_line, value: 40, label: "Target 40" }
+      unit: Active members per 100 households
+    source: Illustrative membership data and forecast
+    notes: >
+      Lines are labeled at their ends, so there is no legend. Forecast years
+      are dashed, suffixed and shaded, and the footer says what e means.
+
+  - layout: chart
+    eyebrow: Waterfall
+    title: Price and new members more than offset higher churn
+    chart:
+      type: waterfall
+      start: { label: "2025", value: 120 }
+      steps:
+        - { label: New members, value: 34 }
+        - { label: Price, value: 18 }
+        - { label: Churn, value: -27 }
+        - { label: Discounts, value: -9 }
+      total: "2026"
+      number_format: '#,##0'
+      unit: Revenue bridge, millions
+    takeaway: Net growth of **16** came from price and new members; churn took back **27**.
+    source: Illustrative finance data
+    notes: Rises are green, falls red, start and end in ink; each bar is labeled.
+
+  - layout: chart
+    eyebrow: Computed deltas
+    title: Self-service resolves 18 points more tickets than two years ago
+    chart:
+      type: column
+      categories: ["2024", "2025", "2026", "2027"]
+      series:
+        - name: Resolved without an agent
+          values: [0.42, 0.51, 0.60, 0.64]
+      number_format: '0%'
+      estimates: { from: "2027" }
+      annotations:
+        - { kind: delta, from: "2024", to: "2026", fmt: pp }
+        - { kind: delta, from: "2026", to: "2027", fmt: pp }
+      unit: Share of tickets resolved without an agent
+    commentary:
+      side: left
+      width: 3
+      bullets:
+        - The deltas are computed from the plotted values.
+        - The last bar is an estimate, so it is lighter and noted.
+    source: Illustrative support data
+    notes: The headline number is the bracket on the chart.
+
+  - layout: section
+    number: 3
+    title: Place the reading beside the data
+    notes: Last, commentary columns and panels.
+
+  - layout: chart
+    eyebrow: Panels
+    title: Every region grew, and the north grew fastest
+    chart:
+      panels:
+        - type: column
+          title: North
+          unit: Members, thousands
+          categories: ["2024", "2025", "2026"]
+          series: [{ name: Members, values: [41, 48, 56] }]
+          highlight: "2026"
+        - type: column
+          title: East
+          unit: Members, thousands
+          categories: ["2024", "2025", "2026"]
+          series: [{ name: Members, values: [33, 35, 38] }]
+          highlight: "2026"
+        - type: column
+          title: South
+          unit: Members, thousands
+          categories: ["2024", "2025", "2026"]
+          series: [{ name: Members, values: [29, 30, 33] }]
+          highlight: "2026"
+    source: Illustrative membership data
+    notes: Same unit, so the panels share one scale and one baseline.
+
+  - layout: chart
+    eyebrow: Panels with different units
+    title: Faster replies came with fewer repeat contacts
+    chart:
+      panels:
+        - type: line
+          title: First reply time
+          unit: Median hours
+          categories: [Q1, Q2, Q3, Q4]
+          series:
+            - { name: Email, values: [9.5, 8.1, 6.4, 5.2] }
+            - { name: Chat, values: [2.1, 1.8, 1.5, 1.2] }
+          series_kind: nominal
+          number_format: '0.0'
+        - type: column
+          title: Repeat contacts
+          unit: Share of tickets reopened
+          categories: [Q1, Q2, Q3, Q4]
+          series:
+            - { name: Email, values: [0.19, 0.17, 0.14, 0.12] }
+            - { name: Chat, values: [0.12, 0.11, 0.10, 0.08] }
+          series_kind: nominal
+          number_format: '0%'
+    source: Illustrative support data
+    notes: >
+      Different units, so each panel keeps its own scale and unit line. Channels
+      have no order, so both panels use the nominal palette.
+
+  - layout: table
+    eyebrow: Commentary on a table
+    title: The shared pool is cheaper at every team size we tested
+    columns: [Team size, Shared pool, Per team]
+    rows:
+      - ["5 teams", "Low", "Medium"]
+      - ["10 teams", "Low", "High"]
+      - ["20 teams", "Medium", "Very high"]
+    highlight_col: 1
+    commentary:
+      bullets:
+        - Cost stays flat because idle capacity is reused.
+        - Per-team pools grow with every team added.
+    source: Illustrative cost model
+    notes: The commentary column takes four grid columns on the right.
+
+  - layout: image
+    eyebrow: Commentary on an image
+    title: Each gate can be switched off per repository
+    image: assets/pipeline-settings.png
+    alt: Pipeline settings screen with one toggle per release gate
+    commentary:
+      side: left
+      width: 3
+      text: Teams keep **one switch per gate** while they adopt the checks.
+    notes: Commentary on the left, three grid columns wide.
+
+  - layout: diagram
+    eyebrow: Commentary on a diagram
+    title: Checks read a masked snapshot, never production
+    grid: { cols: 3, rows: 1 }
+    nodes:
+      - { id: pr, label: Pull request, col: 0, row: 0, kind: external }
+      - { id: runner, label: Check runner, col: 1, row: 0, kind: accent }
+      - { id: snap, label: Snapshot DB, sub: masked copy, col: 2, row: 0, kind: store }
+    edges:
+      - { from: pr, to: runner, label: on push, highlight: true }
+      - { from: runner, to: snap, label: dry run }
+    commentary:
+      width: 3
+      text: The runner holds **no production credentials**.
+    notes: The diagram keeps nine grid columns; the commentary takes three.
+
+  - layout: closing
+    subtitle: Every figure in this deck is illustrative
+    notes: Thank you.
