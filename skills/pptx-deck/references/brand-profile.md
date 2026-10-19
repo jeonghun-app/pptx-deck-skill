@@ -79,7 +79,7 @@ and `body` one step smaller. Do not introduce sizes outside the scale.
 | `accent_2` | Optional second accent; most decks never need it |
 | `on_accent` | Text on accent fills |
 | `dark`, `on_dark`, `on_dark_body` | Dark slides and their text |
-| `positive`, `warning`, `negative` | Status — always paired with a word or shape, never color alone |
+| `positive`, `warning`, `negative` | Status — always paired with a word or shape, never color alone (table check marks and status dots use them) |
 | `series` | Chart series in order; the first is the highlight series |
 
 Check text tokens with `deckkit.contrast(a, b)`; the extractor and the design
@@ -127,6 +127,17 @@ area behind the text.
 default "Source", or "출처" in Korean decks; set `자료` here if that is your
 convention), `next_steps_label` (label of the `next_steps` band; default "What
 this means", or "시사점" in Korean decks), `default_language`.
+
+Words drawn by framework layouts. Each defaults to `null`, which uses the
+built-in English or Korean text for the deck's `meta.language`:
+
+| Key | Used for | Built-in text |
+|---|---|---|
+| `placement_tag` | Tag on a `matrix` whose positions are judged, not measured | "Qualitative placement" / "정성적 배치" |
+| `current_label` | Marker beside the period of the current `process` chevron | "Now" / "현재" |
+| `symbol_labels` | Legend words for table symbols, per family and value: `{harvey: {0..4, na}, check: {yes, partial, no, na}, rag: {g, a, r, na}, tier: {1, 2, 3, na}}`. Set only the values you want to rename | Harvey "None … Full", check "Met / Partly met / Not met", RAG "On track / At risk / Off track", tier "Tier 1 (strongest) … Tier 3", n/a "Not assessed" |
+
+A slide's own `legend: {value: text}` overrides `symbol_labels` for that table.
 
 ### `icons`
 `path`: a folder of icons the organization licenses (PNG preferred; SVG needs

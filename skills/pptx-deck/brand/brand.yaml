@@ -120,6 +120,10 @@ copy:
   source_label: null    # prefix of source lines; null = "Source" (or "출처" when meta.language is ko)
   next_steps_label: null  # label of the next_steps band; null = "What this means" (or "시사점" in ko)
   default_language: en
+  placement_tag: null   # tag on qualitative matrices; null = "Qualitative placement" (ko: "정성적 배치")
+  current_label: null   # marks the current chevron step; null = "Now" (ko: "현재")
+  symbol_labels: null   # legend words for table symbols, e.g. {harvey: {4: Complete}, rag: {a: Watch}};
+                        # null = built-in words for the deck language
 
 # Icon library: a folder of SVG/PNG files your organization is allowed to use.
 # Search it with `scripts/find_icon.py <keyword>`.

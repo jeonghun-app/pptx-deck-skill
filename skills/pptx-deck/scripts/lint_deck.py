@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from deckkit import load_brand, LAYOUTS  # noqa: E402
 from deckkit import measure, story  # noqa: E402
 from deckkit.canvas import CHARTS  # noqa: E402
+from deckkit.frameworks import SYMBOLS, is_symbol_cell, normalize_symbol  # noqa: E402
 
 EMOJI = re.compile("[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0001F000-\U0001F2FF️]")
 STRUCTURAL = {"cover", "section", "closing", "statement", "quote", "agenda"}
@@ -111,8 +112,7 @@ def lint(deck_path: Path, brand_path=None):
                     add("ERROR", i, f"series '{ser.get('name')}' has {len(ser.get('values', []))} values for {n} categories")
             if ch.get("type") in ("pie", "doughnut") and n > 5:
                 add("WARN", i, "part-to-whole chart with more than 5 parts; use a bar chart")
-        if name == "cards" and len(s.get("cards", [])) > 4:
-            add("WARN", i, "more than 4 cards in one row")
+        lint_frameworks(s, name, lambda level, msg, i=i: add(level, i, msg))
         if name == "image":
             p = deck_path.parent / str(s.get("image", ""))
             if not p.exists():
@@ -260,6 +260,144 @@ def lint_story(slides, meta, brand, add):
 
 def _norm(text) -> str:
     return re.sub(r"[^\w]+", " ", str(text)).strip().lower()
+
+
+def _words(text) -> int:
+    return len(measure.strip_markup(str(text)).split())
+
+
+def lint_frameworks(s, name, add):
+    """Checks for matrix, shift, symbol tables, process, cards and stats."""
+    if name == "matrix":
+        size = s.get("size", 2)
+        if size not in (2, 3):
+            add("ERROR", f"matrix size {size}; use 2 (2x2) or 3 (3x3)")
+            size = 2
+        measured = s.get("basis", "qualitative") == "measured"
+        if s.get("basis", "qualitative") not in ("qualitative", "measured"):
+            add("ERROR", f"matrix basis '{s.get('basis')}'; use qualitative or measured")
+        if measured and not s.get("source"):
+            add("ERROR", "measured matrix without a source; say where the scores come from")
+        for key in ("x", "y"):
+            axis = s.get(key) or {}
+            if not (axis.get("label") and axis.get("low") and axis.get("high")):
+                add("WARN", f"matrix {key} axis needs a label and both poles (low, high)")
+            if measured and float(axis.get("max", 1)) <= float(axis.get("min", 0)):
+                add("ERROR", f"matrix {key} axis max must be greater than min")
+            raw = (s.get("thresholds") or {}).get(key)
+            if raw is not None:
+                count = len(raw) if isinstance(raw, list) else 1
+                if not measured:
+                    add("WARN", "matrix thresholds need basis: measured; qualitative cells are equal")
+                elif count != size - 1:
+                    add("ERROR", f"matrix {key} threshold needs {size - 1} value(s) for a {size}x{size} matrix")
+        quadrants = s.get("quadrants") or []
+        if len(quadrants) != size * size:
+            add("ERROR", f"matrix has {len(quadrants)} quadrants; a {size}x{size} matrix needs {size * size}")
+        for n, q in enumerate(quadrants):
+            if not (q.get("name") if isinstance(q, dict) else q):
+                add("ERROR", f"matrix cell {n} has no name; name every cell")
+        lit = sum(1 for q in quadrants if isinstance(q, dict) and q.get("highlight"))
+        if lit > 1 and not s.get("highlight_set"):
+            add("ERROR", f"{lit} highlighted matrix cells; highlight one (or set highlight_set: true)")
+        items = s.get("items") or []
+        if len(items) > 20:
+            add("WARN", f"{len(items)} matrix items; keep 20 or fewer, or split the matrix")
+        per_cell = {}
+        for item in items:
+            label = item.get("label", item.get("id", ""))
+            has_xy = item.get("x") is not None or item.get("y") is not None
+            if measured:
+                if item.get("x") is None or item.get("y") is None:
+                    add("ERROR", f"matrix item '{label}' needs x and y with basis: measured")
+            else:
+                if has_xy:
+                    add("WARN", f"matrix item '{label}' has x/y but the basis is qualitative; "
+                        "place it by cell or measure it")
+                cell = item.get("cell")
+                if not isinstance(cell, int) or not 0 <= cell < size * size:
+                    add("ERROR", f"matrix item '{label}' needs a cell from 0 to {size * size - 1}")
+                else:
+                    per_cell[cell] = per_cell.get(cell, 0) + 1
+        for cell, count in per_cell.items():
+            if count > 6:
+                add("WARN", f"{count} items in matrix cell {cell}; keep 6 or fewer per cell")
+    elif name == "shift":
+        rows = s.get("rows") or []
+        if len(rows) > 6:
+            add("WARN", f"{len(rows)} shift rows; keep 3-6")
+        for n, row in enumerate(rows, start=1):
+            if not str(row.get("to", "")).strip():
+                add("ERROR", f"shift row {n} has no 'to' state")
+            if not str(row.get("dimension", "")).strip():
+                add("WARN", f"shift row {n} has no dimension label")
+            a, b = (len(measure.strip_markup(str(row.get(k, "")))) for k in ("from", "to"))
+            if min(a, b) and max(a, b) > 2 * min(a, b) and max(a, b) > 20:
+                add("WARN", f"shift row {n}: from and to differ in length by more than 2x; "
+                    "write both states in the same grammar")
+    elif name == "table" and (s.get("symbols") or any(
+            isinstance(cell, dict) for row in s.get("rows", []) for cell in row)):
+        lint_symbols(s, add)
+    elif name == "process":
+        steps = s.get("steps") or []
+        chevron = s.get("style", "rail") == "chevron"
+        if s.get("style", "rail") not in ("rail", "chevron"):
+            add("ERROR", f"process style '{s.get('style')}'; use rail or chevron")
+        if len(steps) > (6 if chevron else 5):
+            add("WARN", f"{len(steps)} process steps; keep at most {6 if chevron else 5}"
+                f"{'' if chevron else ' (6 with style: chevron)'}")
+        current = s.get("current")
+        if current is not None and not (isinstance(current, int) and 0 <= current < len(steps)):
+            add("ERROR", f"process current {current} is not a step index (0 to {len(steps) - 1})")
+        for row in s.get("rows") or []:
+            if len(row.get("cells", [])) != len(steps):
+                add("WARN", f"process row '{row.get('label', '')}' has {len(row.get('cells', []))} "
+                    f"cells for {len(steps)} steps")
+    elif name == "cards":
+        cards = s.get("cards") or []
+        is_open = s.get("style", "filled") == "open"
+        if s.get("style", "filled") not in ("filled", "open"):
+            add("ERROR", f"cards style '{s.get('style')}'; use filled or open")
+        if len(cards) > (5 if is_open else 4):
+            add("WARN", f"more than {5 if is_open else 4} cards in one row"
+                f"{'' if is_open else ' (5 with style: open)'}")
+        counts = [_words(card.get("heading", "")) for card in cards if card.get("heading")]
+        if s.get("numbered") and counts and max(counts) > 2 * min(counts):
+            add("WARN", "numbered card headings differ in length by more than 2x; "
+                "write them in the same grammar (verb + object)")
+    elif name == "stats" and len(s.get("stats") or []) > 9:
+        add("WARN", f"{len(s['stats'])} stats; keep at most 9 (a 3x3 grid)")
+
+
+def lint_symbols(s, add):
+    """Symbol tables: one family, every assessed cell filled (na, never blank), a legend."""
+    family = s.get("symbols")
+    if not family:
+        add("ERROR", "table has {s: ...} cells but no 'symbols' family (harvey, check, rag, tier)")
+        return
+    if family not in SYMBOLS:
+        add("ERROR", f"unknown symbols '{family}' (use {', '.join(SYMBOLS)})")
+        return
+    rows = s.get("rows") or []
+    sym_cols = {c for row in rows for c, cell in enumerate(row) if is_symbol_cell(cell)}
+    for r, row in enumerate(rows, start=1):
+        for c, cell in enumerate(row):
+            if c not in sym_cols:
+                continue
+            if not is_symbol_cell(cell):
+                if cell in (None, ""):
+                    add("ERROR", f"table row {r}, column {c + 1} is empty; write a symbol or {{s: na}}")
+                else:
+                    add("WARN", f"table row {r}, column {c + 1} mixes text into a symbol column")
+                continue
+            if normalize_symbol(family, cell.get("s")) is None:
+                add("ERROR", f"table row {r}, column {c + 1}: '{cell.get('s')}' is not a {family} value "
+                    f"({', '.join(str(v) for v in SYMBOLS[family])}, na)")
+            if family == "rag" and not str(cell.get("label", "")).strip():
+                add("WARN", f"table row {r}, column {c + 1}: status without a label; "
+                    "say what the status means here")
+    if s.get("legend", "auto") is False:
+        add("WARN", "symbol table without a legend; readers need it to decode the symbols")
 
 
 def main() -> int:

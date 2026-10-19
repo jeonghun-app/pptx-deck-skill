@@ -65,7 +65,7 @@ Construction:
   meaning by color alone.
 - More than eight rows → two slides (eight rows plus the header fill the body band).
 
-### 2. Status dashboard table — workstreams × attributes (`layout: table`)
+### 2. Status dashboard table — workstreams × attributes (`layout: table`, `symbols: rag`)
 
 **When**: each workstream has several attributes of **different kinds** — stage,
 priority, status, target date, latest progress. As cards, the columns do not line
@@ -77,9 +77,12 @@ Example row: "01 Billing migration / Finance" · "Finance systems" · "Build" ·
 
 - Status is a dot **plus a label** (`colors.positive` "In progress",
   `colors.warning` "Needs discussion", `colors.negative` "Stalled"). A dot alone
-  loses the information for color-blind readers.
+  loses the information for color-blind readers. With `symbols: rag`, write
+  status cells as `{s: g | a | r | na, label: …}`: the dot is a native shape and
+  a cell without a label shows the legend word.
 - The first column holds two lines: name and category.
-- A legend under the table defines each status ("In progress — next action is clear").
+- A legend under the table defines each status ("In progress — next action is clear");
+  `symbols` draws it automatically, and `legend: {g: …, a: …, r: …}` sets the words.
 - More than 7 rows or 7 columns → split, repeating the header row on every slide.
 
 ### 3. Dark stat row — pin down two or three numbers first (`layout: stats` or `custom`)
@@ -93,11 +96,12 @@ summary; a dark fill (`colors.dark`, text `colors.on_dark`) lifts them.
 - Two lines under each number: **what it counts + so what**
   ("6 workstreams — 4 on track, 2 at risk / both risks have a mitigation owner").
 
-### 4. Stage rail — a process gated by exit criteria (`custom`)
+### 4. Stage rail — a process gated by exit criteria (`layout: process`, `style: chevron`)
 
 **When**: a fixed sequence of stages (Scope → Design → Build → Pilot → Rollout) and you need to show where things stand now. Unlike
-`layout: process` (3–4 boxes) or `layout: timeline` (a date axis), five or six
-stages still read comfortably.
+the default rail style (3–5 steps) or `layout: timeline` (a date axis), the
+chevron style keeps five or six stages readable; put exit criteria in `rows`
+(`{label: Exit criterion, cells: [...]}`).
 
 - Each stage: a name (`type.body`) and a two-line description in `colors.muted`,
   separated by thin chevrons or separators in `colors.line`.
@@ -136,14 +140,15 @@ tell whose deck it is.
 
 ---
 
-## 7. Open columns — when cards are not needed (`custom` or `two_column`)
+## 7. Open columns — when cards are not needed (`cards` with `style: open`, or `two_column`)
 
 **When**: three or four groups where each group is a **list**. Three filled cards
 add weight and, with their minimum heights, grow tall. Separate with hairlines only.
 
 - Each column: a head (`type.body`, ink), a short bullet list, and an optional
   one-line foot in `colors.muted` ("Owned by the platform team").
-- Hairline separators in `colors.line`; no fills.
+- Hairline separators in `colors.line`; no fills. `cards` with `style: open` draws
+  this, up to five columns; add `numbered: true` for recommendations and takeaways.
 - Column markers in `colors.accent`, `colors.accent_2`, or neutral at most. Three
   or more accent colors look machine-made.
 

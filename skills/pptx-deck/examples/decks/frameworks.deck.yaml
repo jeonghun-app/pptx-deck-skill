@@ -1,0 +1,292 @@
+# Framework layouts: matrix, shift, symbol tables, chevron process, numbered open
+# cards and stat grids. All names, scores and figures are invented and illustrative.
+meta:
+  title: Where to start with workflow automation
+  author: Presenter Name
+  audience: Operations leadership team
+  objective: Agree which two workflows to automate first and how to judge the pilot
+  desired_action: Approve a two-quarter pilot for the two selected workflows
+  language: en
+
+slides:
+  - layout: cover
+    eyebrow: Illustrative example
+    title: Start automation where value is high and adoption is easy
+    subtitle: A worked example of the framework layouts, with invented content
+    presenter: Presenter Name
+    role: Operations office
+    date: 2026-10
+    notes: >
+      Everything in this deck is invented to show the framework layouts. The
+      story: pick two workflows to automate first, then run a two-quarter pilot.
+
+  - layout: agenda
+    title: Three steps lead from candidates to a pilot decision
+    items:
+      - Which workflows to start with
+      - How the options compare
+      - What the pilot looks like
+    notes: Three steps, in order.
+
+  - layout: section
+    number: 1
+    title: Which workflows to start with
+    notes: First, which workflows to start with.
+
+  - layout: matrix
+    eyebrow: Selection
+    title: Two workflows combine high value with easy adoption
+    x: { label: Ease of adoption, low: Hard, high: Easy }
+    y: { label: Value to the business, low: Low, high: High }
+    quadrants:
+      - { name: Plan carefully, body: High value but needs process change first }
+      - { name: Start here, body: High value and ready to adopt, highlight: true }
+      - { name: Avoid for now, body: Little value and hard to adopt }
+      - { name: Quick fixes, body: "Easy, but small gains" }
+    items:
+      - { id: A, label: Contract review, cell: 0 }
+      - { id: B, label: Invoice matching, cell: 1 }
+      - { id: C, label: Ticket triage, cell: 1 }
+      - { id: D, label: Field audits, cell: 2 }
+      - { id: E, label: Meeting notes, cell: 3 }
+      - { id: F, label: Leave requests, cell: 3 }
+    takeaway: "**Invoice matching** and **ticket triage** are the only candidates that are both valuable and ready."
+    notes: >
+      Placement here is a judgement by the working group, which is why the tag
+      says qualitative placement. Two workflows sit in the top-right cell.
+
+  - layout: matrix
+    eyebrow: Selection
+    title: Measured scores confirm both workflows clear the thresholds
+    basis: measured
+    x: { label: Adoption readiness score, low: Low, high: High, min: 0, max: 100 }
+    y: { label: Hours saved a year, low: Few, high: Many, unit: k, min: 0, max: 20 }
+    thresholds: { x: 60, y: 8 }
+    quadrants:
+      - { name: Plan carefully }
+      - { name: Start here, highlight: true }
+      - { name: Avoid for now }
+      - { name: Quick fixes }
+    items:
+      - { id: A, label: Contract review, x: 34, y: 15 }
+      - { id: B, label: Invoice matching, x: 78, y: 17 }
+      - { id: C, label: Ticket triage, x: 70, y: 12 }
+      - { id: D, label: Field audits, x: 22, y: 4 }
+      - { id: E, label: Meeting notes, x: 85, y: 3 }
+      - { id: F, label: Leave requests, x: 66, y: 2 }
+    source: Illustrative scores, example deck
+    notes: >
+      The same six workflows, now placed by measured scores. The dashed lines
+      are the thresholds the group agreed before scoring.
+
+  - layout: matrix
+    eyebrow: Selection
+    title: A three-level view shows which teams to involve first
+    size: 3
+    x: { label: Data readiness, low: Low, high: High }
+    y: { label: Team appetite, low: Low, high: High }
+    quadrants:
+      - { name: Build data first }
+      - { name: Pilot partners }
+      - { name: Lead the pilot, highlight: true }
+      - { name: Watch }
+      - { name: Prepare }
+      - { name: Second wave }
+      - { name: Not yet }
+      - { name: Inform }
+      - { name: Offer tools }
+    items:
+      - { label: Finance, cell: 2 }
+      - { label: Service desk, cell: 2 }
+      - { label: Procurement, cell: 1 }
+      - { label: Legal, cell: 3 }
+      - { label: Facilities, cell: 7 }
+    commentary:
+      side: left
+      width: 3
+      bullets:
+        - Finance and the service desk lead the pilot
+        - Procurement joins as a partner
+        - Other teams follow in a second wave
+    notes: The three-level grid separates who leads, who partners and who waits.
+
+  - layout: section
+    number: 2
+    title: How the options compare
+    notes: Next, how the options compare.
+
+  - layout: table
+    eyebrow: Options
+    title: Buying a platform beats building on speed and on risk
+    symbols: harvey
+    columns: [Option, Cost, Speed, Risk control, Fit, Verdict]
+    widths: [1.4, 1, 1, 1, 1, 2]
+    rows:
+      - [Build in-house, {s: 1}, {s: 1}, {s: 2}, {s: 4}, Not preferred]
+      - [Buy a platform, {s: 3}, {s: 4}, {s: 3}, {s: 3}, [Preferred, pending a security review]]
+      - [Extend current tools, {s: 4}, {s: 2}, {s: na}, {s: 2}, Fallback option]
+    source: Illustrative assessment, example deck
+    notes: More filled means better. Risk control for extending current tools was not assessed.
+
+  - layout: table
+    eyebrow: Options
+    title: Only one vendor meets every mandatory requirement
+    symbols: check
+    columns: [Requirement, Vendor A, Vendor B, Vendor C]
+    widths: [2.4, 1, 1, 1]
+    rows:
+      - [Single sign-on, {s: yes}, {s: yes}, {s: yes}]
+      - [Data stays in region, {s: yes}, {s: partial}, {s: no}]
+      - [Audit log export, {s: yes}, {s: yes}, {s: partial}]
+      - [Works with the ticket tool, {s: yes}, {s: no}, {s: na}]
+    highlight_col: 1
+    source: Illustrative requirements check, example deck
+    notes: Vendor A meets every mandatory requirement; the others fail at least one.
+
+  - layout: table
+    eyebrow: Readiness
+    title: Two of four preparation streams are on track
+    symbols: rag
+    columns: [Stream, Owner, Status, Next step]
+    widths: [1.4, 1, 1.6, 2.2]
+    rows:
+      - [Data access, Finance IT, {s: g, label: Approved}, Connect the test ledger]
+      - [Security review, Security office, {s: a, label: Two findings open}, Close findings by week 6]
+      - [Process mapping, Service desk, {s: g, label: Complete}, Agree success measures]
+      - [Change support, People team, {s: r, label: No owner yet}, Name an owner this month]
+    source: Illustrative status, example deck
+    notes: The status column always carries words, so it reads without colour.
+
+  - layout: table
+    eyebrow: Readiness
+    title: Finance leads on every capability the pilot needs
+    symbols: tier
+    columns: [Capability, Finance, Service desk, Procurement, Legal]
+    widths: [2, 1, 1, 1, 1]
+    rows:
+      - [Clean source data, {s: 1}, {s: 2}, {s: 2}, {s: 3}]
+      - [Documented process, {s: 1}, {s: 1}, {s: 3}, {s: 2}]
+      - [Named process owner, {s: 1}, {s: 2}, {s: 2}, {s: na}]
+    source: Illustrative assessment, example deck
+    notes: Darker means stronger. Legal has not named an owner yet, so it is not assessed.
+
+  - layout: shift
+    eyebrow: Operating model
+    title: Five changes move the work from manual queues to assisted flow
+    headers: [Today, Target]
+    rows:
+      - { dimension: Intake, from: "Requests arrive by **email**", to: "Requests arrive through **one form**" }
+      - { dimension: Triage, from: "A person sorts **every** request", to: "Software sorts, a person **checks**", highlight: true }
+      - { dimension: Matching, from: Invoices matched line by line, to: Exceptions matched by hand only }
+      - { dimension: Reporting, from: Monthly spreadsheet, to: Live queue dashboard }
+      - { dimension: Ownership, from: Shared by three teams, to: One owner per workflow }
+    notes: Each row is one change. Triage is the change that frees the most time.
+
+  - layout: section
+    number: 3
+    title: What the pilot looks like
+    notes: Finally, the pilot itself.
+
+  - layout: process
+    eyebrow: Pilot plan
+    title: The pilot runs in three phases with one decision at the end
+    style: chevron
+    current: 0
+    steps:
+      - { title: Prepare, period: Q1 }
+      - { title: Pilot, period: Q2 }
+      - { title: Decide, period: Q3 }
+    rows:
+      - { label: Objective, cells: [Data and owners in place, Two workflows live, Scale or stop] }
+      - { label: Key output, cells: [Signed-off process maps, Weekly measures, Recommendation paper] }
+      - { label: Gate, cells: [Security findings closed, Error rate below target, Leadership decision] }
+    notes: >
+      Phases are conceptual, not proportional to time. We are in the preparation
+      phase now.
+
+  - layout: process
+    eyebrow: Pilot plan
+    title: Each workflow goes through the same four steps
+    current: 1
+    steps:
+      - { title: Map, period: Weeks 1-2, body: Record the current steps and volumes }
+      - { title: Configure, period: Weeks 3-6, body: Set up rules and connect the data }
+      - { title: Shadow run, period: Weeks 7-9, body: Run beside people and compare }
+      - { title: Switch over, period: Week 10, body: People handle exceptions only }
+    rows:
+      - { label: Owner, cells: [Process owner, Platform team, Process owner, Process owner] }
+      - { label: Done when, cells: [Map signed off, Rules tested, Results within target, Old queue closed] }
+    notes: The rail style keeps the existing look; periods and rows are optional.
+
+  - layout: process
+    eyebrow: Pilot plan
+    title: Six handoffs make up the invoice workflow end to end
+    style: chevron
+    steps:
+      - { title: Receive, body: Invoice arrives }
+      - { title: Read, body: Fields extracted }
+      - { title: Match, body: Order and receipt }
+      - { title: Approve, body: Budget owner }
+      - { title: Pay, body: Payment run }
+      - { title: Archive, body: Kept for audit }
+    notes: Six steps fit in the chevron style when each title is one word.
+
+  - layout: cards
+    eyebrow: Recommendations
+    title: Five actions make the pilot decision-ready
+    style: open
+    numbered: true
+    highlight: 0
+    cards:
+      - { heading: Name one owner per workflow, body: The owner signs off the process map and the measures }
+      - { heading: Close the security findings, body: No live data reaches the platform before both are closed }
+      - { heading: Agree the measures now, body: "Hours saved and error rate, measured the same way before and after" }
+      - { heading: Keep people on exceptions, body: Staff handle what the software cannot match }
+      - { heading: Decide at the end of Q3, body: "Scale, adjust or stop, on the agreed measures only" }
+    notes: Five actions, each one owned. The first one unblocks the others.
+
+  - layout: cards
+    eyebrow: Recommendations
+    title: Three conditions must hold before we scale beyond the pilot
+    numbered: true
+    highlight: 1
+    cards:
+      - { heading: Measured savings, body: Hours saved meet the agreed target for two months in a row }
+      - { heading: Stable error rate, body: Errors stay at or below the manual baseline }
+      - { heading: Ready second wave, body: At least two more teams have clean data and an owner }
+    notes: The second condition is the one most pilots miss.
+
+  - layout: stats
+    eyebrow: Pilot at a glance
+    title: Six numbers frame the size of the pilot
+    stats:
+      - { value: "2", label: workflows in the pilot }
+      - { value: "4", label: teams involved }
+      - { value: "6 mo", label: pilot length }
+      - { value: "1,800", label: invoices per month in scope }
+      - { value: "35%", label: target share handled without a person }
+      - { value: "1", label: decision point at the end }
+    highlight: 4
+    source: Illustrative figures, example deck
+    notes: The one number to remember is the 35 percent target.
+
+  - layout: stats
+    eyebrow: Pilot at a glance
+    title: Nine measures will be tracked every week of the pilot
+    stats:
+      - { value: "12 h", label: median time to match an invoice }
+      - { value: "3.1%", label: invoice error rate }
+      - { value: "640", label: tickets triaged per week }
+      - { value: "18 min", label: median triage time }
+      - { value: "92%", label: triage accuracy on checked samples }
+      - { value: "41", label: exceptions per week }
+      - { value: "2", label: open security findings }
+      - { value: "4.2", label: staff satisfaction (of 5) }
+      - { value: "0", label: data incidents }
+    highlight: 1
+    source: Illustrative baseline values, example deck
+    notes: These are the baseline values we will compare against each week.
+
+  - layout: closing
+    subtitle: Questions and discussion
+    notes: Thank you.

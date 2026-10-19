@@ -23,12 +23,14 @@ Patterns are grouped by what the page has to do for the reader.
 | Explain | `evidence-consequence` | see a finding and what follows from it | `two_column`, `chart`, `custom` |
 | Explain | `driver-tree` | break a problem into parts worth testing | `diagram`, `custom` |
 | Explain | `flow-synthesis` | trace several inputs into one result | `diagram` |
-| Decide | `criteria-comparison` | weigh options on identical criteria | `table`, `two_column`, `cards` |
-| Decide | `priority-action` | turn an assessment into responses | `custom`, `table` |
+| Decide | `criteria-comparison` | weigh options on identical criteria | `table` (with `symbols`), `two_column`, `cards` |
+| Decide | `priority-action` | turn an assessment into responses | `matrix`, `table` |
+| Decide | `recommendation` | judge one proposed action, or a short list of them | `cards` (numbered, open), `table`, `two_column` |
 | Decide | `impact-bridge` | link operating changes to a measured outcome | `diagram`, `custom` (waterfall) |
 | Plan | `goal-hierarchy` | trace initiatives up to goals and down to enablers | `custom`, `diagram` |
 | Plan | `maturity-ladder` | see where a capability is and where it should go | `table`, `process`, `custom` |
-| Plan | `workstream-plan` | see who works on what, in which phase or week | `table`, `timeline`, `custom` |
+| Plan | `change-shift` | see what changes, dimension by dimension | `shift` |
+| Plan | `workstream-plan` | see who works on what, in which phase or week | `process` (with `rows`), `table`, `timeline`, `custom` |
 | Plan | `roles-and-authority` | know who decides, who delivers, who escalates | `diagram`, `table` |
 | Report | `drill-down` | move from a headline number to its explanation | `chart` sequence, `custom` |
 | Report | `annotated-deliverable` | know exactly what a deliverable contains and how to produce it | `custom`, `image` with callouts |
@@ -117,7 +119,10 @@ criteria into sensible blocks.
 
 **Reading cues:** shared rows signal that values are comparable. Use one
 treatment, applied once, to mark the recommended option or the deciding
-difference. A requirement-to-answer map links each requirement ID to the output
+difference. Ordinal ratings read fastest as symbols (`table` with `symbols:
+harvey | check | rag | tier`): one family per table, the legend under it, `na`
+for "not assessed" (never a blank that reads as zero), and a verdict column
+when there is a result. A requirement-to-answer map links each requirement ID to the output
 and page that answers it; it is a traceability table, not an agenda decoration.
 
 **Pick another pattern if:** one numeric measure decides the matter; a bar or
@@ -130,7 +135,12 @@ criteria.
 reader needs to see how an assessment changes what happens next.
 
 **Construction:** before placing any item, write down what each axis measures,
-which way it increases, what it is based on, and where the thresholds are. Item
+which way it increases, what it is based on, and where the thresholds are.
+`layout: matrix` draws the frame: name both poles of each axis, give every
+cell a one- or two-word name, and highlight only the cell the headline
+recommends. Declare the basis: `qualitative` lists items inside their cells and
+tags the exhibit "Qualitative placement"; `measured` plots values on scales,
+prints the thresholds and requires a source. Item
 IDs stay the same in the matrix and in the action table beside or after it, and
 the table names the response, the owner, and the next review date where
 relevant. A qualitative quadrant holds categories; exact coordinates are only
@@ -144,6 +154,28 @@ sits behind it.
 thing, or a made-up threshold would decide the outcome. A ranked list, an
 explicit criteria table, or plain categories are more honest. Do not invent
 precise positions to fill a quadrant.
+
+### `recommendation`
+
+**Fits:** the reader must judge one course of action, or act on a short list
+of them.
+
+**Construction:** for one action, lay out three aligned columns: the situation
+(two to four facts), the proposal (the one highlighted column), and the
+expected effects (each a short "+" item). For several actions, use numbered open
+columns (`cards` with `style: open, numbered: true`): 3–5 items, each a 2–6 word
+imperative heading over 2–4 lines of body, all in the same grammar. When each
+action pairs with a problem, use a `table` row per problem with fixed columns:
+problem, response, mechanism, benefit.
+
+**Reading cues:** the numeral is a handle for discussion ("point 3") and for
+later pages that pick one item up; parallel headings let the reader compare
+without reading every body. Put the reason and the payoff on the same page as
+the action, so it can be judged and not only read.
+
+**Pick another pattern if:** the items have a real order or dependencies (use
+`process`), one item dominates (a `statement` with support), or the findings are
+still exploratory.
 
 ### `impact-bridge`
 
@@ -194,7 +226,8 @@ observe.
 
 **Construction:** define what qualifies a stage, carry earlier prerequisites
 forward, and mark both the current and the target stage with the evidence for
-each. Stage columns or a readable step form both work; a compact
+each. A "today" marker is nearly always needed; `process` `current` draws it
+(in chevron style the current step's period reads "· Now"). Stage columns or a readable step form both work; a compact
 capability-by-stage `table` is often clearer than a crowded staircase.
 
 **Reading cues:** height means more capability. Spacing between stages is
@@ -205,13 +238,34 @@ not just sound more ambitious than the last.
 capabilities have no natural order, or nobody has assessed the current state.
 Use a timeline, a comparison, or an assessment plan instead.
 
+### `change-shift`
+
+**Fits:** a transformation the reader should see as a set of concrete changes:
+operating model, current vs target process, old vs new approach.
+
+**Construction:** one row per dimension (`layout: shift`): a short dimension
+label, the current state, a chevron, the target state. Write both states in the
+same grammar ("Long planning cycles" → "Short planning cycles") and bold the
+word that changes. Four to six rows; head the columns "Today" / "Target" or
+with dates.
+
+**Reading cues:** each row reads on its own and compares with the others,
+because the pairing is done for the reader. Highlight only the row the headline
+is about.
+
+**Pick another pattern if:** the two sides are unrelated lists (`two_column`)
+or the target is not defined yet.
+
 ### `workstream-plan`
 
 **Fits:** several workstreams move through shared phases, or the reader needs
 dates, milestones, and review rhythm.
 
 **Construction:** for a method view, make workstreams the rows and phases the
-columns; each cell names the main activity and what it produces. Draw gates on
+columns; each cell names the main activity and what it produces. `process`
+with `style: chevron` and `rows` draws this directly: the phases as a chevron
+header with the period above each, then one row per attribute (objective,
+output, owner, gate) aligned under the phases, the current phase tinted. Draw gates on
 phase boundaries only where a real decision happens. For calendar views, use
 `timeline` or a `custom` Gantt that computes bar positions from dates, labels
 the milestones, and includes a legend. A crowded calendar splits by workstream
