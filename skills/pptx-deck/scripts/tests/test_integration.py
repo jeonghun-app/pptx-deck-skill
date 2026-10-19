@@ -85,7 +85,7 @@ def test_summary_expected_only_in_sectioned_decks(tmp_path):
 
 
 def test_matrix_commentary_is_supported(tmp_path):
-    spec = {"layout": "matrix", "title": "Two options combine value with easy adoption", "notes": "n",
+    spec = {"layout": "matrix", "title": "Two options combine high impact with low effort", "notes": "n",
             "x": {"label": "Ease", "low": "Hard", "high": "Easy"},
             "y": {"label": "Value", "low": "Low", "high": "High"},
             "quadrants": [{"name": n} for n in ("A", "B", "C", "D")],

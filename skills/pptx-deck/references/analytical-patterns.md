@@ -245,7 +245,7 @@ operating model, current vs target process, old vs new approach.
 
 **Construction:** one row per dimension (`layout: shift`): a short dimension
 label, the current state, a chevron, the target state. Write both states in the
-same grammar ("Long planning cycles" → "Short planning cycles") and bold the
+same grammar ("Approvals by email" → "Approvals in the tool") and bold the
 word that changes. Four to six rows; head the columns "Today" / "Target" or
 with dates.
 

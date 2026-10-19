@@ -11,7 +11,7 @@ meta:
 slides:
   - layout: cover
     eyebrow: Illustrative example
-    title: Start automation where value is high and adoption is easy
+    title: Start automation where impact is high and effort is low
     subtitle: A worked example of the framework layouts, with invented content
     presenter: Presenter Name
     role: Operations office
@@ -30,11 +30,11 @@ slides:
 
   - layout: summary
     eyebrow: Summary
-    title: Automate invoice matching and ticket triage first
+    title: Automate invoice matching and expense approvals first
     blocks:
       - section: 1
         points:
-          - "Two workflows combine high value with easy adoption"
+          - "Two workflows combine high impact with low effort"
           - "Measured scores confirm both clear the thresholds"
       - section: 2
         points:
@@ -54,22 +54,22 @@ slides:
 
   - layout: matrix
     eyebrow: Selection
-    title: Two workflows combine high value with easy adoption
-    x: { label: Ease of adoption, low: Hard, high: Easy }
-    y: { label: Value to the business, low: Low, high: High }
+    title: Two workflows combine high impact with low effort
+    x: { label: Effort to implement, low: High, high: Low }
+    y: { label: Expected impact, low: Low, high: High }
     quadrants:
-      - { name: Plan carefully, body: High value but needs process change first }
-      - { name: Start here, body: High value and ready to adopt, highlight: true }
-      - { name: Avoid for now, body: Little value and hard to adopt }
-      - { name: Quick fixes, body: "Easy, but small gains" }
+      - { name: Plan carefully, body: High impact but needs process change first }
+      - { name: Start here, body: High impact for little effort, highlight: true }
+      - { name: Avoid for now, body: Little impact for a lot of effort }
+      - { name: Quick fixes, body: "Little effort, small gains" }
     items:
       - { id: A, label: Contract review, cell: 0 }
       - { id: B, label: Invoice matching, cell: 1 }
-      - { id: C, label: Ticket triage, cell: 1 }
+      - { id: C, label: Expense approvals, cell: 1 }
       - { id: D, label: Field audits, cell: 2 }
       - { id: E, label: Meeting notes, cell: 3 }
       - { id: F, label: Leave requests, cell: 3 }
-    takeaway: "**Invoice matching** and **ticket triage** are the only candidates that are both valuable and ready."
+    takeaway: "**Invoice matching** and **expense approvals** are the only candidates with high impact for low effort."
     notes: >
       Placement here is a judgement by the working group, which is why the tag
       says qualitative placement. Two workflows sit in the top-right cell.
@@ -78,7 +78,7 @@ slides:
     eyebrow: Selection
     title: Measured scores confirm both workflows clear the thresholds
     basis: measured
-    x: { label: Adoption readiness score, low: Low, high: High, min: 0, max: 100 }
+    x: { label: Implementation readiness score, low: Low, high: High, min: 0, max: 100 }
     y: { label: Hours saved a year, low: Few, high: Many, unit: k, min: 0, max: 20 }
     thresholds: { x: 60, y: 8 }
     quadrants:
@@ -89,7 +89,7 @@ slides:
     items:
       - { id: A, label: Contract review, x: 34, y: 15 }
       - { id: B, label: Invoice matching, x: 78, y: 17 }
-      - { id: C, label: Ticket triage, x: 70, y: 12 }
+      - { id: C, label: Expense approvals, x: 70, y: 12 }
       - { id: D, label: Field audits, x: 22, y: 4 }
       - { id: E, label: Meeting notes, x: 85, y: 3 }
       - { id: F, label: Leave requests, x: 66, y: 2 }
@@ -157,7 +157,7 @@ slides:
       - [Single sign-on, {s: yes}, {s: yes}, {s: yes}]
       - [Data stays in region, {s: yes}, {s: partial}, {s: no}]
       - [Audit log export, {s: yes}, {s: yes}, {s: partial}]
-      - [Works with the ticket tool, {s: yes}, {s: no}, {s: na}]
+      - [Works with the finance system, {s: yes}, {s: no}, {s: na}]
     highlight_col: 1
     source: Illustrative requirements check, example deck
     notes: Vendor A meets every mandatory requirement; the others fail at least one.
@@ -195,11 +195,11 @@ slides:
     headers: [Today, Target]
     rows:
       - { dimension: Intake, from: "Requests arrive by **email**", to: "Requests arrive through **one form**" }
-      - { dimension: Triage, from: "A person sorts **every** request", to: "Software sorts, a person **checks**", highlight: true }
+      - { dimension: Approval, from: "A person checks **every** claim", to: "Software checks, a person **decides** exceptions", highlight: true }
       - { dimension: Matching, from: Invoices matched line by line, to: Exceptions matched by hand only }
       - { dimension: Reporting, from: Monthly spreadsheet, to: Live queue dashboard }
       - { dimension: Ownership, from: Shared by three teams, to: One owner per workflow }
-    notes: Each row is one change. Triage is the change that frees the most time.
+    notes: Each row is one change. Approval is the change that frees the most time.
 
   - layout: section
     number: 3
@@ -295,9 +295,9 @@ slides:
     stats:
       - { value: "12 h", label: median time to match an invoice }
       - { value: "3.1%", label: invoice error rate }
-      - { value: "640", label: tickets triaged per week }
-      - { value: "18 min", label: median triage time }
-      - { value: "92%", label: triage accuracy on checked samples }
+      - { value: "640", label: expense claims per week }
+      - { value: "18 min", label: median approval time }
+      - { value: "92%", label: claims passing automatic checks }
       - { value: "41", label: exceptions per week }
       - { value: "2", label: open security findings }
       - { value: "4.2", label: staff satisfaction (of 5) }

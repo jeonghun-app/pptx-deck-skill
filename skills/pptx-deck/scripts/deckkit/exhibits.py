@@ -26,7 +26,7 @@ MINUS = "−"
 # the brand overrides any of these keys.
 WORDS = {
     "en": {"question": "Q: {}", "base": "Base: {}", "n": "n = {}", "as_of": "As of {}",
-           "rounding": "Figures may not add up to the totals shown because of rounding.",
+           "rounding": "Totals may differ because of rounding.",
            "estimate_from": "Values from {} on are estimates.", "estimate_suffix": "{} = estimate.",
            "estimate_series": "{} (estimate)", "pp": "pp", "x": "x"},
     "ko": {"question": "질문: {}", "base": "대상: {}", "n": "n = {}", "as_of": "{} 기준",

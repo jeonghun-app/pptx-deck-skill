@@ -351,9 +351,9 @@ step; the others recede.
   style: chevron
   current: 0
   steps:
-    - { title: Foundation, period: 2026 }
-    - { title: Scale,      period: 2027-28 }
-    - { title: Maturity,   period: 2029+ }
+    - { title: Prepare,  period: Q1 }
+    - { title: Pilot,    period: Q2 }
+    - { title: Roll out, period: Q3–Q4 }
   rows:
     - { label: Objective,  cells: [Data in place, Two use cases live, Run at scale] }
     - { label: Key output, cells: [Signed-off maps, Weekly measures, Operating model] }
@@ -377,8 +377,8 @@ honest.
 
 ```yaml
 - layout: matrix
-  x: { label: Ease of adoption, low: Hard, high: Easy }
-  y: { label: Strategic value,  low: Low,  high: High }
+  x: { label: Effort to implement, low: High, high: Low }
+  y: { label: Expected impact,     low: Low,  high: High }
   size: 2                  # 2 or 3 cells per axis
   basis: qualitative       # qualitative (default) | measured
   quadrants:               # row-major from the top-left (high y, low x); a name each
@@ -387,7 +387,7 @@ honest.
     - { name: Avoid }
     - { name: Quick fixes }
   items:
-    - { id: A, label: Claims triage, cell: 1 }     # qualitative: by cell index
+    - { id: A, label: Report formatting, cell: 1 }     # qualitative: by cell index
   takeaway: One sentence, in the right column like a chart takeaway
 ```
 
@@ -430,8 +430,8 @@ is defined.
 - layout: shift
   headers: [Today, Target]          # or dated labels
   rows:                             # 3-6
-    - { dimension: Planning, from: "**Annual** plan per unit", to: "**Quarterly** shared roadmap" }
-    - { dimension: Teams, from: Siloed teams, to: Cross-functional teams, highlight: true }
+    - { dimension: Status, from: "**Weekly** status emails", to: "**Live** dashboard" }
+    - { dimension: Approvals, from: Approvals by email, to: Approvals in the tool, highlight: true }
 ```
 
 The dimension sits on a `colors.surface_alt` tab (22 % of the width), the
