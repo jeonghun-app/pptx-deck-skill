@@ -87,6 +87,7 @@ b1 = bp.slides.add_slide(bp.slide_layouts[6])
 r = box(b1, 72, 48, 800, 33, "On-brand headline", 18, "1F2328").text_frame.paragraphs[0].runs[0]; r.font.name = "Arial"
 r = box(b1, 72, 150, 400, 40, "Off-brand color and font", 14, "C2185B").text_frame.paragraphs[0].runs[0]; r.font.name = "Comic Sans MS"
 box(b1, 72, 220, 400, 30, "9.9pt text", 9.9, "1F2328")   # passes the neutral 9.75pt floor, fails brand min 10
+box(b1, 72, 270, 12, 12, "", 10, fill="7894E2")            # chart key swatch: an accent ramp tint is on-brand
 
 with tempfile.TemporaryDirectory() as d:
     f = Path(d) / "b.pptx"; bp.save(f); y = Path(d) / "brand.yaml"; y.write_text(BRAND)
@@ -103,6 +104,7 @@ with tempfile.TemporaryDirectory() as d:
     assert rc1 == 1 and ("min-size", "fail") in got1, branded["findings"]
     assert ("off-brand-color", "warn") in got1 and ("off-brand-font", "warn") in got1, branded["findings"]
     assert branded["thresholds"]["min_pt"] == 10 and branded["thresholds"]["palette_checked"]
+    assert all("7894E2" not in x["evidence"] for x in branded["findings"]), branded["findings"]
     assert all("1F2328" not in x["evidence"] and "Arial" not in x["evidence"]
                for x in branded["findings"] if x["rule"] in {"off-brand-color", "off-brand-font"})
     assert subprocess.run([sys.executable, str(HERE / "deck-craft-lint.py"), str(f), "--brand", str(Path(d) / "none.yaml")],

@@ -18,7 +18,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from deckkit import load_brand, LAYOUTS  # noqa: E402
-from deckkit import measure  # noqa: E402
+from deckkit import exhibits, measure  # noqa: E402
 from deckkit.canvas import CHARTS  # noqa: E402
 
 EMOJI = re.compile("[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0001F000-\U0001F2FF️]")
@@ -37,6 +37,100 @@ def walk_strings(node):
     elif isinstance(node, list):
         for v in node:
             yield from walk_strings(v)
+
+
+def lint_footer(add, i, s, brand, language, width):
+    """Survey numbers need their sample size; a footer is a few lines at most."""
+    src = s.get("source")
+    if s.get("survey") and s.get("layout") in ("chart", "stats") and \
+            not (isinstance(src, dict) and src.get("n") is not None):
+        add("WARN", i, "survey figures without a sample size; add source.n (per segment when segments are compared)")
+    paras = exhibits.footer_paragraphs(src, brand, language, exhibits.auto_notes(s, brand, language))
+    lines = sum(measure.count_lines(p, brand["type.caption"], width) for p in paras)
+    if lines > 3:
+        add("WARN", i, f"exhibit footer runs to {lines} lines; keep it to 3 and move detail to the notes")
+
+
+def lint_chart(add, i, ch, where=""):
+    kind = ch.get("type", "column")
+    if kind not in CHARTS:
+        add("ERROR", i, f"{where}unsupported chart type '{kind}' (available: {', '.join(CHARTS)})")
+        return
+    if kind == "waterfall":
+        if not ch.get("steps"):
+            add("ERROR", i, f"{where}waterfall without steps")
+        elif any(not isinstance(st.get("value"), (int, float)) for st in ch["steps"]):
+            add("ERROR", i, f"{where}every waterfall step needs a numeric value")
+        elif exhibits.waterfall_low(ch) < 0:
+            add("ERROR", i, f"{where}waterfall running total goes below zero; rebase the start or split the bridge")
+        cats = exhibits.waterfall_categories(ch)
+    else:
+        cats = ch.get("categories", [])
+    series = ch.get("series", [])
+    n = len(cats)
+    for ser in series:
+        if len(ser.get("values", [])) != n:
+            add("ERROR", i, f"{where}series '{ser.get('name')}' has {len(ser.get('values', []))} values for {n} categories")
+    if kind in ("pie", "doughnut") and n > 5:
+        add("WARN", i, f"{where}part-to-whole chart with more than 5 parts; use a bar chart")
+    marked = exhibits.as_list(ch.get("highlight"))
+    if marked and len(series) > 1:
+        add("WARN", i, f"{where}highlight marks categories of a single series; use highlight_series")
+    for ref in marked:
+        if exhibits.category_index(cats, ref) is None:
+            add("ERROR", i, f"{where}highlight '{ref}' is not a category")
+    for ref in exhibits.as_list(ch.get("highlight_series")):
+        if not isinstance(ref, int) or not 0 <= ref < len(series):
+            add("ERROR", i, f"{where}highlight_series {ref!r} is not a series index")
+    if ch.get("series_kind") not in (None, "ordered", "nominal"):
+        add("ERROR", i, f"{where}series_kind must be ordered or nominal")
+    if kind == "line" and len(series) > 6 and ch.get("highlight_series") is None:
+        add("WARN", i, f"{where}{len(series)} lines with no highlight; highlight one series or use panels")
+    est = ch.get("estimates")
+    if est and kind not in exhibits.ANNOTATED:
+        add("ERROR", i, f"{where}estimates work on column, bar and line charts, not '{kind}'")
+    elif est and exhibits.category_index(cats, est.get("from")) is None:
+        add("ERROR", i, f"{where}estimates.from '{est.get('from')}' is not a category")
+    notes = ch.get("annotations") or []
+    if notes and kind not in exhibits.ANNOTATED:
+        add("ERROR", i, f"{where}annotations work on column, bar and line charts, not '{kind}'")
+        return
+    for a in notes:
+        k = a.get("kind")
+        if k not in ("ref_line", "band", "callout", "delta"):
+            add("ERROR", i, f"{where}unknown annotation kind '{k}' (ref_line, band, callout, delta)")
+            continue
+        refs = {"band": ("from", "to"), "callout": ("at",), "delta": ("from", "to")}.get(k, ())
+        for key in refs:
+            if exhibits.category_index(cats, a.get(key)) is None:
+                add("ERROR", i, f"{where}{k} {key} '{a.get(key)}' is not a category")
+        if k == "ref_line" and exhibits.ref_value(a, series) is None:
+            add("ERROR", i, f"{where}ref_line value must be a number or 'mean'")
+        if k == "delta":
+            if a.get("fmt", "abs") not in ("pp", "pct", "x", "abs"):
+                add("ERROR", i, f"{where}delta fmt must be pp, pct, x or abs")
+            if a.get("fmt") == "pct" and exhibits.is_percent(ch.get("number_format")):
+                add("WARN", i, f"{where}a difference between shares reads in percentage points; use fmt: pp")
+    points = sum(a.get("kind") in exhibits.POINT_KINDS for a in notes)
+    if points > 3:
+        add("WARN", i, f"{where}{points} callouts and deltas; keep the 1–3 the headline needs")
+    if points and n > 8:
+        add("WARN", i, f"{where}callouts on a chart with {n} categories get lost; cut categories or drop them")
+
+
+def lint_commentary(add, i, s, name):
+    if name not in ("chart", "table", "image", "diagram"):
+        add("WARN", i, f"commentary has no effect on '{name}' slides (chart, table, image, diagram)")
+    if s.get("commentary") and s.get("takeaway"):
+        add("WARN", i, "both commentary and takeaway; takeaway is ignored — keep one")
+    note = s.get("commentary")
+    if isinstance(note, dict):
+        if not (note.get("text") or note.get("bullets")):
+            add("ERROR", i, "commentary needs text or bullets")
+        if note.get("side", "right") not in ("right", "left"):
+            add("ERROR", i, "commentary side must be right or left")
+        if note.get("width", 4) not in (3, 4):
+            add("ERROR", i, "commentary width is 3 or 4 grid columns")
 
 
 def lint(deck_path: Path, brand_path=None):
@@ -59,6 +153,7 @@ def lint(deck_path: Path, brand_path=None):
         add("ERROR", 0, "deck has no slides")
         return out
     width = brand.content_width
+    language = str(meta.get("language") or brand.get("copy.default_language", "en"))
     run = 1
     for i, s in enumerate(slides, start=1):
         name = s.get("layout", "bullets")
@@ -90,18 +185,27 @@ def lint(deck_path: Path, brand_path=None):
             for r, row in enumerate(s.get("rows", []), start=1):
                 if len(row) != cols:
                     add("ERROR", i, f"table row {r} has {len(row)} cells, header has {cols}")
-        if name in ("stats", "chart") and not s.get("source"):
+        src = s.get("source")
+        if name in ("stats", "chart") and not (src.get("text") if isinstance(src, dict) else src):
             add("WARN", i, "numbers without a source line")
+        lint_footer(add, i, s, brand, language, width)
         if name == "chart":
-            ch = s.get("chart", {})
-            if ch.get("type", "column") not in CHARTS:
-                add("ERROR", i, f"unsupported chart type '{ch.get('type')}' (available: {', '.join(CHARTS)})")
-            n = len(ch.get("categories", []))
-            for ser in ch.get("series", []):
-                if len(ser.get("values", [])) != n:
-                    add("ERROR", i, f"series '{ser.get('name')}' has {len(ser.get('values', []))} values for {n} categories")
-            if ch.get("type") in ("pie", "doughnut") and n > 5:
-                add("WARN", i, "part-to-whole chart with more than 5 parts; use a bar chart")
+            ch = s.get("chart", {}) or {}
+            panels = ch.get("panels") or []
+            if panels and not 2 <= len(panels) <= 4:
+                add("WARN", i, f"{len(panels)} chart panels; use 2–4 in one row, or split the slide")
+            for k, p in enumerate(panels or [ch], start=1):
+                lint_chart(add, i, p, f"panel {k}: " if panels else "")
+            seen = {}
+            for p in panels:  # one key serves all panels only if a series keeps its color
+                names = tuple(str(ser.get("name")) for ser in p.get("series", []))
+                colors = exhibits.series_colors(brand, p.get("type", "column"), len(names),
+                                                p.get("series_kind"), p.get("highlight_series"))
+                if len(names) > 1 and seen.setdefault(names, colors) != colors:
+                    add("WARN", i, "panels draw the same series in different colors; give them the same "
+                                   "series_kind and highlight_series")
+        if "commentary" in s or "takeaway" in s:
+            lint_commentary(add, i, s, name)
         if name == "cards" and len(s.get("cards", [])) > 4:
             add("WARN", i, "more than 4 cards in one row")
         if name == "image":
