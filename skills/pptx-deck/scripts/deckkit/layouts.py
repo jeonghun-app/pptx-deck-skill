@@ -1,9 +1,9 @@
 """Slide layouts.
 
 Each layout receives a ``Canvas``, the slide spec (a dict from deck.yaml) and
-the build context. Content layouts draw the shared chrome (eyebrow, one-line
-headline, accent rule) and then place their body between ``layout.body_top``
-and ``layout.body_bottom``. Layouts never invent values: every size, color and
+the build context. Content layouts draw the shared chrome (eyebrow, headline,
+accent rule) and then place their body between ``layout.body_top`` and
+``layout.body_bottom``. Layouts never invent values: every size, color and
 position comes from the brand profile.
 """
 from __future__ import annotations
@@ -48,14 +48,30 @@ def eyebrow_text(c: Canvas, text: str) -> str:
     return str(text).upper() if c.brand.get("type.eyebrow_uppercase") else str(text)
 
 
+def reading_width(c: Canvas, size, width: float) -> float:
+    """Width for reading text at ``size``: at most ``type.max_measure`` characters per line.
+
+    Lines much longer than that make the eye lose its place on the way back to the
+    next line, so wider space stays empty (or goes to the exhibit) instead.
+    """
+    chars = c.brand.get("type.max_measure")
+    return min(width, measure.measure_width(c.size(size), float(chars))) if chars else width
+
+
 def headline(c: Canvas, spec: dict, ctx) -> float:
-    """Eyebrow + one-line headline + accent rule. Returns the body start y."""
+    """Eyebrow (or section tracker) + headline + accent rule + lead. Returns the body start y.
+
+    The band reserves ``layout.title_lines`` headline lines (two in ``meta.mode: read``),
+    so the body starts at the same y on every content slide of the deck.
+    """
+    from . import story  # story builds on this module, so it is imported late
     b = c.brand
     x, w = b.content_left, b.content_width
-    eyebrow = spec.get("eyebrow")
-    if eyebrow:
+    eyebrow_w = story.tracker(c, spec, ctx)
+    eyebrow = story.eyebrow(c, spec, ctx)
+    if eyebrow and eyebrow_w > 0:
         text = eyebrow_text(c, eyebrow)
-        c.text(x, b["layout.eyebrow_y"], w, b["type.label"] * 1.4, text, size="label",
+        c.text(x, b["layout.eyebrow_y"], eyebrow_w, b["type.label"] * 1.4, text, size="label",
                font="mono", color="accent", name="Eyebrow")
     title = spec.get("title")
     if title:
@@ -67,16 +83,21 @@ def headline(c: Canvas, spec: dict, ctx) -> float:
                    spacing=b.get("type.heading_line_spacing"), anchor="top", name="Title",
                    check_fit=False)
         lines = measure.count_lines(title, b["type.title"], w)
-        if lines > 1:
-            c.warn(f"headline wraps to {lines} lines; content headlines are one line — shorten it")
+        allowed = int(b.get("layout.title_lines") or 1)
+        if lines > allowed:
+            limit = "one line" if allowed == 1 else f"at most {allowed} lines"
+            c.warn(f"headline wraps to {lines} lines; content headlines are {limit} — shorten it")
     if b.get("layout.rule_y") is not None and title and not spec.get("no_rule"):
         c.box(x, b["layout.rule_y"], b["layout.rule_w"], b["layout.rule_h"], fill="accent",
               radius=0, name="Rule")
     y = float(b["layout.body_top"])
     lead = spec.get("lead")
-    if lead:
-        h = c.text_height(lead, "lead", w)
-        c.text(x, y, w, h, lead, size="lead", color=c.body_color, name="Lead")
+    if lead and spec.get("lead_style") == "band":  # the answer under a question headline
+        y += story.band(c, x, y, w, lead, name="Lead band") + float(b["layout.gutter"])
+    elif lead:
+        lw = reading_width(c, "lead", w)
+        h = c.text_height(lead, "lead", lw)
+        c.text(x, y, lw, h, lead, size="lead", color=c.body_color, name="Lead")
         y += h + float(b["layout.gutter"])
     return y
 
@@ -115,6 +136,7 @@ def bullet_items(items):
 
 def draw_bullets(c: Canvas, x, y, w, items, size="lead", gap=None) -> float:
     gap = c.size(size) * 0.6 if gap is None else gap
+    w = reading_width(c, size, w)  # narrow columns are unaffected; wide lists keep the measure
     for text, subs in bullet_items(items):
         h = c.text_height(text, size, w - c.size(size) * 1.1)
         c.text(x, y, w, h, text, size=size, bullet="•", color=c.body_color, bold_color=c.ink)
@@ -147,8 +169,9 @@ def cover(c: Canvas, spec, ctx):
            name="Title")
     y += th + b["layout.gutter"]
     if spec.get("subtitle"):
-        sh = c.text_height(spec["subtitle"], "lead", w)
-        c.text(x, y, w, sh, spec["subtitle"], size="lead", color=c.body_color, name="Subtitle")
+        sw = reading_width(c, "lead", w)
+        sh = c.text_height(spec["subtitle"], "lead", sw)
+        c.text(x, y, sw, sh, spec["subtitle"], size="lead", color=c.body_color, name="Subtitle")
     meta = " · ".join(str(v) for v in (spec.get("presenter"), spec.get("role"), spec.get("date")) if v)
     if meta:
         c.text(x, b.height - 96, w, b["type.body"] * 1.6, meta, size="body", color=c.muted,
@@ -172,9 +195,10 @@ def section(c: Canvas, spec, ctx):
     c.text(x, y, w, th, title, size="section", font="heading", color=c.ink,
            bold=bool(b.get("type.heading_bold")), spacing=b.get("type.heading_line_spacing"),
            name="Title")
-    if spec.get("subtitle"):
+    if spec.get("subtitle"):  # the chapter's thesis; the summary layout can repeat it
         sy = y + th + b["layout.gutter"]
-        c.text(x, sy, w, c.text_height(spec["subtitle"], "lead", w), spec["subtitle"],
+        sw = reading_width(c, "lead", w)
+        c.text(x, sy, sw, c.text_height(spec["subtitle"], "lead", sw), spec["subtitle"],
                size="lead", color=c.body_color)
 
 
@@ -192,8 +216,9 @@ def closing(c: Canvas, spec, ctx):
     y += th + b["layout.gutter"]
     for key, size in (("subtitle", "lead"), ("contact", "body")):
         if spec.get(key):
-            h = c.text_height(spec[key], size, w)
-            c.text(x, y, w, h, spec[key], size=size, color=c.body_color if key == "subtitle" else c.muted)
+            kw = reading_width(c, size, w)
+            h = c.text_height(spec[key], size, kw)
+            c.text(x, y, kw, h, spec[key], size=size, color=c.body_color if key == "subtitle" else c.muted)
             y += h + b["layout.gutter"] / 2
     ctx.cover_logo(c)
 
@@ -205,7 +230,8 @@ def statement(c: Canvas, spec, ctx):
     text = spec.get("text") or spec.get("title", "")
     th = c.text_height(text, "statement", w, b.get("type.heading_line_spacing"))
     support = spec.get("support")
-    sh = c.text_height(support, "lead", w) if support else 0
+    sw = reading_width(c, "lead", w)
+    sh = c.text_height(support, "lead", sw) if support else 0
     y = (b.height - th - sh - b["layout.gutter"]) / 2
     if spec.get("eyebrow"):
         c.text(x, y - b["type.label"] * 2.6, w, b["type.label"] * 1.4, eyebrow_text(c, spec["eyebrow"]),
@@ -214,7 +240,7 @@ def statement(c: Canvas, spec, ctx):
            bold=bool(b.get("type.heading_bold")), spacing=b.get("type.heading_line_spacing"),
            bold_color="accent", name="Statement")
     if support:
-        c.text(x, y + th + b["layout.gutter"], w, sh, support, size="lead", color=c.body_color)
+        c.text(x, y + th + b["layout.gutter"], sw, sh, support, size="lead", color=c.body_color)
 
 
 @layout("quote", structural=True)

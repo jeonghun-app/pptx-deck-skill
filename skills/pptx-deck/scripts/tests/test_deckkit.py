@@ -39,10 +39,9 @@ def test_samples_lint_and_build_clean(deck, tmp_path):
 
 
 def test_sample_covers_every_layout():
-    spec = yaml.safe_load((SKILL / "examples/decks/sample.deck.yaml").read_text(encoding="utf-8"))
-    used = {s["layout"] for s in spec["slides"]}
-    ko = yaml.safe_load((SKILL / "examples/decks/ko-sample.deck.yaml").read_text(encoding="utf-8"))
-    used |= {s["layout"] for s in ko["slides"]}
+    used = set()
+    for deck in SAMPLES:  # sample.deck.yaml, ko-sample.deck.yaml and one deck per feature track
+        used |= {s["layout"] for s in yaml.safe_load(deck.read_text(encoding="utf-8"))["slides"]}
     assert set(LAYOUTS) == used
 
 

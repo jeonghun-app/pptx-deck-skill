@@ -10,6 +10,7 @@ from pptx import Presentation
 from pptx.enum.shapes import PP_PLACEHOLDER
 from pptx.util import Pt
 
+from . import story
 from .brand import Brand, load_brand
 from .canvas import Canvas, Warnings
 from .layouts import LAYOUTS
@@ -180,8 +181,12 @@ def build(deck_path: str | Path, out_path: str | Path, brand_path: str | Path | 
     meta = spec.get("meta", {})
     if brand_path is None and meta.get("brand"):
         brand_path = deck_path.parent / meta["brand"]
-    brand = load_brand(brand_path)
     warnings = Warnings()
+    if story.mode(meta) not in story.MODES:
+        warnings.add(0, f"unknown meta.mode '{story.mode(meta)}' (use present or read); built as present")
+        meta = {**meta, "mode": "present"}
+    # read mode reserves a two-line title band on every content slide (story.frame_brand)
+    brand = story.frame_brand(load_brand(brand_path), meta)
 
     template = brand.path("template.path")
     if template:
@@ -195,6 +200,7 @@ def build(deck_path: str | Path, out_path: str | Path, brand_path: str | Path | 
     ctx = Context(brand, deck_path.parent, prs, warnings)
     slides = spec.get("slides", [])
     ctx.total = len(slides)
+    story.prepare(ctx, slides, meta)
 
     for i, s in enumerate(slides, start=1):
         name = s.get("layout", "bullets")
@@ -208,7 +214,11 @@ def build(deck_path: str | Path, out_path: str | Path, brand_path: str | Path | 
         c.language = str(meta.get("language") or brand.get("copy.default_language", "en"))
         bg_role = role if role != "content" else ("cover" if s.get("dark") else "content")
         c.dark = bool(ctx.background(c, bg_role, s))
+        ctx.section = ctx.section_at.get(i, ctx.section)
+        steps = None if fn.structural or s.get("full_bleed") else story.reserve_next_steps(c, s)
         fn(c, s, ctx)
+        if steps:
+            story.draw_next_steps(c, s, steps)
         if not fn.structural and not s.get("no_footer"):
             ctx.footer(c, i)
         if ctx.template:

@@ -1,0 +1,186 @@
+# Reading-structure deck: a pre-read that is sent ahead and read on screen or paper.
+# Shows meta.mode: read (two-line headlines in a fixed band), the section tracker,
+# eyebrow: auto, the summary layout, lead_style: band and the next_steps band.
+# Every number and name is invented and illustrative — replace it with sourced data.
+meta:
+  title: Shortening customer onboarding
+  author: Presenter Name
+  audience: Operations and product leads who read the pack before the review meeting
+  objective: Agree that onboarding waits come from handoffs and fix the handoffs first
+  desired_action: Approve a six-week trial of a single onboarding owner in one region
+  language: en
+  mode: read        # two-line headline band on every content slide
+  tracker: dots     # section position at the top right; tabs is the other option
+
+slides:
+  - layout: cover
+    eyebrow: Pre-read · illustrative
+    title: New accounts wait eleven days for work that takes two
+    subtitle: Why onboarding is slow, what to change first, and the trial we ask you to approve
+    presenter: Presenter Name
+    date: 2026-11
+    notes: >
+      This pack is meant to be read before the review. The summary on the next page
+      carries the whole argument; the three sections behind it hold the evidence.
+
+  - layout: summary
+    eyebrow: Executive summary
+    title: Onboarding is slow because accounts wait between teams, so one owner per account should come before any new tooling
+    blocks:
+      - section: 1
+        points:
+          - "**Eleven days** from signed contract to first use; about two are work"
+          - Three handoffs hold most of the waiting time
+      - section: 2
+        heading: What we change first
+        points:
+          - One owner carries each account from contract to first use
+          - Handoff checklists replace email threads
+      - section: 3
+        points:
+          - Six weeks in one region, measured against the others
+          - No new system; existing tools only
+    so_what: Approve a **six-week trial** of one onboarding owner per account in one region.
+    source: Illustrative figures for the sample deck
+    notes: >
+      If you read only this page: the delay is waiting, not work; the fix is an owner
+      per account; we ask for a six-week trial in one region.
+
+  - layout: agenda
+    title: Three questions take the review from diagnosis to a decision
+    items:
+      - Where does onboarding time go?
+      - What do we change first?
+      - What do we ask you to approve?
+    notes: The pack follows the same three questions as the summary.
+
+  - layout: section
+    number: 1
+    title: Where onboarding time goes
+    short: Diagnosis
+    subtitle: Eleven days of waiting come from three handoffs, not from the work itself.
+    notes: First, the diagnosis.
+
+  - layout: bullets
+    eyebrow: auto
+    title: Three handoffs account for most of the eleven days a new account waits, and none of them adds work
+    lead: >-
+      We timed every step for a sample of new accounts, from signed contract to first use,
+      including the days each request sat in a queue before anyone opened it.
+    bullets:
+      - "**Contract to setup** — the request sits in a shared inbox until claimed"
+      - "**Setup to data import** — the customer is asked again for files sent at signing"
+      - text: "**Import to training** — training is booked only after import is confirmed by email"
+        sub: [The confirmation itself takes a day on average in this illustrative sample]
+    source: Illustrative sample of new accounts, invented for this deck
+    notes: >
+      None of these three handoffs is hard work. Each is a wait for someone to notice
+      that the account is now theirs.
+
+  - layout: chart
+    eyebrow: auto
+    title: Which step holds a new account the longest?
+    lead_style: band
+    lead: The wait before setup starts is the longest single step, longer than all hands-on work combined.
+    chart:
+      type: bar
+      categories: [Waiting for setup, Waiting for files, Waiting for training, Hands-on work]
+      series:
+        - name: Median days
+          values: [4.5, 2.5, 2, 2]
+      highlight: 0
+      unit: Median days per step, illustrative sample
+    source: Illustrative sample of new accounts, invented for this deck
+    notes: The question headline is answered directly underneath, before the chart.
+
+  - layout: stats
+    eyebrow: auto
+    title: Most of the waiting sits in queues that no single person is responsible for clearing
+    stats:
+      - { value: "11 days", label: median from contract to first use, detail: Illustrative }
+      - { value: "2 days", label: of hands-on work in that time, detail: Illustrative }
+      - { value: "3", label: handoffs between teams, detail: Sales, setup, training }
+    highlight: 0
+    source: Illustrative sample of new accounts, invented for this deck
+    notes: Eleven days, two of them work, three handoffs.
+
+  - layout: section
+    number: 2
+    title: What we change first
+    short: Changes
+    subtitle: One owner per account removes the handoffs before any tool is bought.
+    notes: Second, what we change.
+
+  - layout: two_column
+    eyebrow: auto
+    title: An owner who carries the account end to end removes the waits between teams
+    relation: "→"
+    left:
+      heading: Today
+      bullets:
+        - Each team works its own queue
+        - The account waits at every handoff
+        - Nobody sees the whole timeline
+    right:
+      heading: Proposed
+      bullets:
+        - One owner from contract to first use
+        - Teams are pulled in by the owner
+        - The owner reports the timeline weekly
+    next_steps:
+      items:
+        - Name one owner per new account in the trial region
+        - Replace the setup inbox with the owner's checklist
+        - Report days-to-first-use weekly against other regions
+    notes: The change is organisational; the three steps below are what the trial does first.
+
+  - layout: process
+    eyebrow: auto
+    title: The trial runs in four stages over six weeks, with a decision built into the last one
+    steps:
+      - { title: Prepare, body: Pick owners and the checklist }
+      - { title: Start, body: New accounts get an owner }
+      - { title: Measure, body: Days to first use, weekly }
+      - { title: Decide, body: Extend, adjust or stop }
+    current: 0
+    notes: Week one is preparation only.
+
+  - layout: section
+    number: 3
+    title: What we ask you to approve
+    short: Decision
+    subtitle: A six-week trial in one region, judged on days to first use.
+    notes: Third, the decision.
+
+  - layout: table
+    eyebrow: auto
+    title: The trial costs owner time only and is judged on two measures agreed in advance
+    columns: [Item, Trial region, Other regions]
+    rows:
+      - [Owners, [Four existing staff, part time], [No change]]
+      - [Tools, [Current tools and a checklist], [No change]]
+      - [Measure, [Median days to first use], [Same measure, as comparison]]
+      - [Guardrail, [Customer satisfaction at first use], [Same measure, as comparison]]
+    widths: [1, 2, 2]
+    highlight_col: 1
+    notes: Nothing is bought for the trial.
+
+  - layout: bullets
+    eyebrow: auto
+    title: We ask for one decision today and will return in six weeks with a recommendation to extend or stop
+    bullets:
+      - "**Approve** the six-week trial in one region"
+      - "**Name** the sponsor who receives the weekly timeline"
+      - "**Agree** now that the trial is judged on days to first use"
+    next_steps:
+      label: After approval
+      items:
+        - Owners named within one week
+        - Weekly timeline from week two
+        - Recommendation to extend or stop at week six
+    notes: Three things to decide; the band shows what happens right after.
+
+  - layout: closing
+    subtitle: Questions before the review meeting
+    contact: onboarding-team@example.com
+    notes: Thank you for reading ahead.

@@ -69,3 +69,19 @@ def count_lines(text: str, size: float, width: float) -> int:
 
 def text_height(text: str, size: float, width: float, spacing: float = 1.2) -> float:
     return count_lines(text, size, width) * size * 1.2 * spacing
+
+
+# Average advance of running Latin text, spaces included. A CJK glyph (0.95 em)
+# is about two of these, so a measure counted in Latin characters holds roughly
+# half as many Hangul or Kanji characters per line.
+LATIN_EM = 0.5
+
+
+def chars_per_line(size: float, width: float) -> float:
+    """How many average Latin characters fit on one line of ``width`` at ``size``."""
+    return width / (LATIN_EM * size) if size > 0 else 0.0
+
+
+def measure_width(size: float, chars: float) -> float:
+    """Width of a line that holds ``chars`` average Latin characters at ``size``."""
+    return chars * LATIN_EM * size

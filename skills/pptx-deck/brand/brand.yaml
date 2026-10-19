@@ -50,6 +50,7 @@ type:
   caption: 11     # captions, sources, legends
   label: 10       # eyebrow, tags, page number
   min: 10
+  max_measure: 75           # longest reading line in average Latin characters (CJK ~2 each); null = no cap
   line_spacing: 1.2         # body paragraphs (multiple of font size)
   heading_line_spacing: 1.05
   heading_bold: false       # large size already creates hierarchy
@@ -85,6 +86,7 @@ layout:
   eyebrow_y: 34
   title_y: 50
   title_h: 34
+  title_lines: 1        # headline lines title_h / rule_y / body_top reserve; meta.mode: read needs 2
   rule_y: 90            # short accent rule under the headline; null to hide
   rule_w: 42
   rule_h: 2
@@ -102,6 +104,7 @@ chrome:
     width: 64
     position: footer-right        # footer-right | footer-left | top-right
   cover_logo_width: 96
+  tracker: none                   # none | tabs | dots: section tracker on content slides; meta.tracker overrides
 
 # Backgrounds for structural slides: a color key above, or an image path.
 backgrounds:
@@ -115,6 +118,7 @@ copy:
   closing_title: Thank you
   agenda_eyebrow: AGENDA
   source_label: null    # prefix of source lines; null = "Source" (or "출처" when meta.language is ko)
+  next_steps_label: null  # label of the next_steps band; null = "What this means" (or "시사점" in ko)
   default_language: en
 
 # Icon library: a folder of SVG/PNG files your organization is allowed to use.

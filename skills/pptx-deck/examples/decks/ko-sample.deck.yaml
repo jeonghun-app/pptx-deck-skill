@@ -17,7 +17,7 @@ slides:
 
   - layout: stats
     eyebrow: 현황
-    title: 검토 요청의 절반이 하루 이상 대기합니다
+    title: 검토 요청의 절반이 하루 이상 대기
     stats:
       - { value: "52%", label: 하루 이상 대기한 요청, detail: 예시값 }
       - { value: "3.1일", label: 평균 대기 시간, detail: 요청부터 첫 의견까지 }
@@ -28,7 +28,7 @@ slides:
 
   - layout: cards
     eyebrow: 제안
-    title: 반복 확인 항목은 자동화하고 판단은 사람이 합니다
+    title: 반복 확인은 자동화하고 판단은 사람이 한다
     cards:
       - { heading: 형식 점검, body: 필수 항목과 서식을 제출 즉시 확인합니다 }
       - { heading: 용어 점검, body: 승인된 용어집과 다른 표현을 표시합니다 }
@@ -39,7 +39,7 @@ slides:
   - layout: custom
     python: custom/gantt.py
     eyebrow: 일정
-    title: 6주 안에 준비부터 판단까지 마칩니다
+    title: 6주 안에 준비부터 확대 판단까지 완료
     periods: [1주, 2주, 3주, 4주, 5주, 6주]
     rows:
       - { label: 점검 규칙 정리, start: 0, end: 1, done: true }
