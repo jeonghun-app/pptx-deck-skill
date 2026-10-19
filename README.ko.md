@@ -1,6 +1,6 @@
 # pptx-deck-skill
 
-[English](README.md)
+[English](README.md) · **버전 0.2.0** · [변경 내역](CHANGELOG.md) · [릴리스](https://github.com/jeonghun-app/pptx-deck-skill/releases)
 
 발표 내용을 **우리 조직의 디자인을 따르는, 편집 가능한 PowerPoint 파일**로 만들어 주는
 에이전트 스킬입니다. 이야기의 구조는 모델이 잡고, 색·글꼴·위치·슬라이드 패턴은
@@ -14,6 +14,35 @@
 ![예제 덱, 기본(중립) 브랜드](docs/images/sample-neutral-contact.png)
 
 슬라이드 원본 크기 이미지와 PPTX 파일은 [예제](#예제)에서 볼 수 있습니다.
+
+## 0.2에서 달라진 점
+
+- **요점을 스스로 말하는 도표**
+  - 구조화된 각주(주석, 질문, 대상, n, 기준일, 출처)
+  - 강조색 하나와 회색 배경 색
+  - 선 끝 라벨, `waterfall`, 추정치 표시
+  - 데이터에서 계산한 주석(기준선, 구간, 콜아웃, 증감)
+  - 도표 옆 `commentary` 해설 열, 작은 차트 묶음 `panels`
+- **프레임워크 레이아웃**
+  - `matrix`(2×2/3×3)
+  - 기호 표(하비볼, 체크, 상태)
+  - `shift`(현재 → 목표)
+  - 정렬된 행이 붙은 셰브론 `process`
+  - 번호를 단 열린 `cards`, 최대 9개 값의 `stats` 격자
+- **읽는 구조**
+  - 장별 결론으로 만든 요약(`summary`)과 진행 표시
+  - 두 줄 제목을 쓰는 읽기 모드
+  - 질문형 제목의 답변 띠, `next_steps` 띠
+- **추정 대신 측정**: 실제로 렌더링되는 글꼴로 글자 폭을 재기 때문에 줄바꿈·넘침 경고가 슬라이드와 일치합니다.
+- **한국어 관례**: 명사형 제목, `%p`, 단위·출처 표기를 지원합니다.
+
+0.1에서 업그레이드하는 경우, 기존 계획 파일과 브랜드 파일은 그대로 빌드됩니다. 눈에 보이게 바뀐 기본값이 몇 가지 있습니다.
+
+- 꺾은선 끝 라벨
+- 본문 한 줄 길이 상한
+- 기본 팔레트를 쓸 때 여러 계열에 강조색 단계 적용
+
+각 항목을 끄는 방법은 [변경 내역](CHANGELOG.md)에 있습니다.
 
 ## 왜 만들었나
 
@@ -174,6 +203,10 @@ cd pptx-deck-skill && ./install.sh      # ~/.claude/skills에 링크하고 의�
    적어도 됩니다. 적지 않은 값은 기본값을 그대로 씁니다
    (예: `examples/brands/warm-editorial/brand.yaml`).
 
+   빌드하는 컴퓨터에 브랜드 글꼴이 설치되어 있지 않으면 `fonts.<role>.file`에
+   글꼴 파일 경로를 지정합니다. 그래야 글자 폭을 정확히 잴 수 있습니다.
+   `colors.series`를 직접 정한 브랜드는 그 차트 팔레트를 그대로 씁니다.
+
 3. **숫자가 아닌 규칙 적기**: 문체, 쓰지 않는 단어, 꼭 넣어야 하는 장, 승인된 패턴,
    도식 규칙을 `brand/guidelines.md`에 적습니다.
 
@@ -204,6 +237,13 @@ python scripts/build_deck.py my.deck.yaml -o out/my.pptx
 python scripts/render_deck.py out/my.pptx
 python ../pptx-layout-audit/scripts/deck-craft-lint.py out/my.pptx --brand brand/brand.yaml
 ```
+
+덱 전체 옵션은 `meta`에 씁니다. 자세한 내용은
+[`references/deck-format.md`](skills/pptx-deck/references/deck-format.md)를 봅니다.
+
+- `mode: read`: 미리 읽는 덱. 고정된 영역에 두 줄 제목을 씁니다.
+- `tracker: tabs | dots`: 진행 표시
+- `language: ko`: 한국어 문구
 
 레이아웃: `cover`, `section`, `agenda`, `summary`, `statement`, `bullets`,
 `two_column`, `cards`, `stats`, `table`, `chart`(`waterfall`, `panels` 포함),

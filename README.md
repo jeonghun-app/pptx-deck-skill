@@ -1,6 +1,6 @@
 # pptx-deck-skill
 
-[한국어](README.ko.md)
+[한국어](README.ko.md) · **Version 0.2.0** · [Changelog](CHANGELOG.md) · [Releases](https://github.com/jeonghun-app/pptx-deck-skill/releases)
 
 Agent skills that turn a presentation story into a **native, editable
 PowerPoint file in your organization's own design**. The model plans the story;
@@ -15,6 +15,28 @@ your brand profile decides every color, font, position and slide pattern.
 ![Sample deck, neutral default brand](docs/images/sample-neutral-contact.png)
 
 See [Examples](#examples) for the slides at full size and the PPTX files.
+
+## What's new in 0.2
+
+- **Exhibits that carry their own point.** Structured footers (notes, question,
+  base, n, date, source), highlights in one accent with grey context, line end
+  labels, `waterfall`, estimate styling, annotations computed from the data
+  (reference lines, bands, callouts, deltas), a `commentary` column beside any
+  exhibit, and `panels` of small multiples.
+- **Framework layouts.** `matrix` (2×2 / 3×3), symbol tables (Harvey balls,
+  check marks, status), `shift` (from → to), chevron `process` with aligned rows,
+  numbered open `cards`, and `stats` grids of up to nine values.
+- **Reading structure.** An executive `summary` built from the section
+  conclusions, a section tracker, a reading mode with two-line headlines,
+  answer bands for question headlines, and `next_steps` bands.
+- **Measured, not guessed.** Text is measured with the fonts the deck renders
+  in, so wrap and overflow warnings match the slides.
+- **Korean conventions.** Noun-phrase headlines, `%p`, unit and source labels.
+
+Upgrading from 0.1: existing deck specs and brand files build without
+changes. A few defaults changed visibly (line end labels, a reading-width cap,
+accent tints for several series on the default palette); each has an opt-out
+listed in the [changelog](CHANGELOG.md).
 
 ## Why
 
@@ -176,6 +198,10 @@ cd pptx-deck-skill && ./install.sh      # links skills into ~/.claude/skills and
    is fine; missing keys inherit the neutral defaults
    (see `examples/brands/warm-editorial/brand.yaml`).
 
+   If your brand fonts are not installed where you build, point
+   `fonts.<role>.file` at the font files so text is measured exactly. A brand
+   with its own `colors.series` keeps that chart palette.
+
 3. **Write the rules that are not numbers** in `brand/guidelines.md`: voice,
    banned words, required slides, approved patterns, diagram conventions.
 
@@ -207,6 +233,11 @@ python scripts/build_deck.py my.deck.yaml -o out/my.pptx
 python scripts/render_deck.py out/my.pptx
 python ../pptx-layout-audit/scripts/deck-craft-lint.py out/my.pptx --brand brand/brand.yaml
 ```
+
+Deck-wide options in `meta`: `mode: read` for a pre-read deck (two-line
+headlines in a fixed band), `tracker: tabs | dots` for a section tracker, and
+`language: ko` for Korean wording. See
+[`references/deck-format.md`](skills/pptx-deck/references/deck-format.md).
 
 Layouts: `cover`, `section`, `agenda`, `summary`, `statement`, `bullets`,
 `two_column`, `cards`, `stats`, `table`, `chart` (incl. `waterfall` and
