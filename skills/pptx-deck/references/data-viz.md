@@ -113,7 +113,8 @@ line. Keep the footer to three lines; move the rest to the speaker notes.
 - Ordered series (stack segments, size bands, years) get a ramp of accent tints
   from dark to light, so the order is visible: `series_kind: ordered`, the default
   for stacks and multi-series column, bar and line charts when
-  `colors.series_mode` is `ramp`.
+  `colors.series_mode` is `ramp` (the default, unless the brand sets its own
+  `colors.series`; then that palette is kept).
 - Categories with no order (channels, products) are `series_kind: nominal` and
   take `colors.series` in order. Panels that repeat the same series must give
   them the same colors.

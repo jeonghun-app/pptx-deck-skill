@@ -102,7 +102,7 @@ def prepare(ctx, slides: list, meta: dict):
         tab_w = (b.content_width - float(b["layout.gutter"]) * (n - 1)) / n
         for sec in ctx.sections:
             label = tab_label(b, sec)
-            if measure.text_width(label, float(b["type.label"])) > tab_w:
+            if measure.text_width(label, float(b["type.label"]), "mono") > tab_w:  # tabs are set in mono
                 ctx.warnings.add(sec["slide"], f"tracker tab '{label}' is wider than its tab "
                                  f"({tab_w:.0f}pt); give the section a shorter `short:` label")
     ctx.tracker = style
@@ -221,6 +221,8 @@ def _next_steps(c: Canvas, spec: dict) -> tuple[str, list]:
     ns = spec.get("next_steps") or {}
     if isinstance(ns, list):
         ns = {"items": ns}
+    elif not isinstance(ns, dict):  # a bare string is one item (lint reports the form)
+        ns = {"items": [ns]}
     label = ns.get("label") or c.brand.get("copy.next_steps_label") or (
         "시사점" if getattr(c, "language", "en") == "ko" else "What this means")
     return str(label), [str(item) for item in ns.get("items", [])]
@@ -247,6 +249,9 @@ def reserve_next_steps(c: Canvas, spec: dict):
     if not spec.get("next_steps"):
         return None
     label, items = _next_steps(c, spec)
+    if not items:
+        c.warn("next_steps has no items; no band is drawn")
+        return None
     if not 2 <= len(items) <= 4:
         c.warn(f"next_steps has {len(items)} items; keep 2–4")
     *_, h = _next_steps_geometry(c, items)

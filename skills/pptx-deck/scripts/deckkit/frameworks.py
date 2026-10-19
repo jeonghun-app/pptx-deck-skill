@@ -15,7 +15,7 @@ from pptx.util import Pt
 
 from . import measure
 from .canvas import Canvas
-from .layouts import check_bottom, draw_bullets, grid_span, headline, layout, source_line
+from .layouts import check_bottom, commentary_column, headline, layout, source_line
 
 # -- copy defaults -------------------------------------------------------------
 # Brand `copy.*` tokens override these; the language comes from `meta.language`.
@@ -200,43 +200,6 @@ def symbol_legend(c: Canvas, x: float, y: float, w: float, family: str, labels: 
 
 # -- side column -------------------------------------------------------------
 
-def side_column(c: Canvas, spec: dict, y: float, limit: float):
-    """Optional reading column (``takeaway`` or ``commentary``). Returns (x, w) left for the exhibit.
-
-    ``takeaway: text`` is the right column at 4 of 12 grid columns, as on charts.
-    ``commentary: {text | bullets, side: right|left, width: 3|4}`` sets side and width.
-    """
-    b = c.brand
-    note = spec.get("commentary")
-    if isinstance(note, str):
-        note = {"text": note}
-    if not note and spec.get("takeaway"):
-        note = {"text": spec["takeaway"]}
-    if not note:
-        return b.content_left, b.content_width
-    n = int(b.get("layout.columns", 12))
-    span = 3 if int(note.get("width", 4)) == 3 else 4
-    gutter = float(b["layout.gutter"])
-    if note.get("side") == "left":
-        px, pw = grid_span(c, 0, span)
-        ex, ew = grid_span(c, span, n - span)
-    else:
-        ex, ew = grid_span(c, 0, n - span)
-        px, pw = grid_span(c, n - span, span)
-    end = y
-    if note.get("text"):
-        th = c.text_height(note["text"], "lead", pw - 12)
-        c.box(px, y, 2, th, fill="accent", radius=0, name="Commentary rule")
-        c.text(px + 12, y, pw - 12, th, note["text"], size="lead", color=c.ink, bold_color="accent",
-               name="Commentary")
-        end = y + th
-    if note.get("bullets"):
-        top = end + (gutter if note.get("text") else 0)
-        end = draw_bullets(c, px, top, pw, note["bullets"], size="body")
-    check_bottom(c, end, limit)
-    return ex, ew
-
-
 # -- matrix ------------------------------------------------------------------
 
 def _fmt(value, unit="") -> str:
@@ -299,7 +262,7 @@ def matrix(c: Canvas, spec, ctx):
     b = c.brand
     y = headline(c, spec, ctx)
     limit = source_line(c, spec)
-    mx, mw = side_column(c, spec, y, limit)
+    mx, mw = commentary_column(c, spec, y, limit)  # same column as charts and tables
     size = 3 if int(spec.get("size", 2)) == 3 else 2
     measured = spec.get("basis", "qualitative") == "measured"
     ax, ay = spec.get("x", {}) or {}, spec.get("y", {}) or {}

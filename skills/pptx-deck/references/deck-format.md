@@ -4,10 +4,11 @@ The plan is the single source of truth for a deck. It is written in PLAN,
 approved by the user, and built as-is. People may edit it directly and ask for
 a rebuild; the build follows the file, not the conversation.
 
-Complete examples: `examples/decks/sample.deck.yaml` (the core layouts, English),
-`examples/decks/ko-sample.deck.yaml` (Korean, with a custom slide) and
-`examples/decks/story.deck.yaml` (a read-mode pre-read with summary, tracker and
-the reading bands). Between them every built-in layout appears at least once.
+Complete examples in `examples/decks/`: `sample.deck.yaml` (the core layouts,
+English), `ko-sample.deck.yaml` (Korean, with a custom slide), `story.deck.yaml`
+(a read-mode pre-read with summary, tracker and the reading bands),
+`exhibits.deck.yaml` (chart options) and `frameworks.deck.yaml` (matrix, shift,
+symbol tables, chevrons). Between them every built-in layout appears at least once.
 
 ## Top level
 
@@ -87,7 +88,7 @@ renderer, diagram edges to unknown nodes, unknown `meta.mode`, tracker or
 WARN (decide and either fix or accept): headline wraps past one line (two in
 read mode) or has more than 25 words in read mode,
 headline reads like a topic label, more than 5 bullets, table over 7 × 7,
-numbers without a source, more than 4 cards, image without alt text, the same
+numbers without a source, more than 4 cards (5 with `style: open`), image without alt text, the same
 layout three times in a row, multi-slide deck without cover or closing, 8+
 content slides without an agenda, 10+ content slides without a `summary`, a
 summary block heading that differs from its section's title, a summary outside

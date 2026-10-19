@@ -79,7 +79,7 @@ colors:
   series: [2F5BD3, 7A8699, 0F8A7E, B7791F, 8E4EC6]
   # How ordered series (stacks, several series on one chart) are colored:
   # ramp = tints of `accent` from dark to light; palette = `series` above.
-  series_mode: ramp
+  series_mode: null     # ramp: ordered series in accent tints | palette: `series` in order | null: ramp unless you set your own `series`
 
 # Layout grid and the fixed vertical band of every content slide.
 layout:

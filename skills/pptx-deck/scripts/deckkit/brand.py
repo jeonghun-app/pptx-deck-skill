@@ -123,6 +123,12 @@ def contrast(a: str, b: str) -> float:
     return (la + 0.05) / (lb + 0.05)
 
 
+def deck_language(meta: dict, brand) -> str:
+    """Base language code of a deck: ``ko-KR``, ``ko_KR`` and ``KO`` are all ``ko``."""
+    raw = str((meta or {}).get("language") or brand.get("copy.default_language", "en") or "en")
+    return raw.replace("_", "-").split("-")[0].strip().lower() or "en"
+
+
 def load_brand(path: str | Path | None = None) -> Brand:
     defaults = yaml.safe_load(DEFAULT_BRAND.read_text(encoding="utf-8"))
     if path is None or Path(path).resolve() == DEFAULT_BRAND:

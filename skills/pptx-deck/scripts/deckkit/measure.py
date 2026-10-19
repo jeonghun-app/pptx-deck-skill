@@ -46,18 +46,29 @@ def _is_cjk(ch: str) -> bool:
 
 @functools.lru_cache(maxsize=None)
 def _match(face: str) -> str | None:
-    """Font file fontconfig would use for ``face`` (None without fontconfig)."""
+    """Font fontconfig would use for ``face``, as ``file`` or ``file#index`` for a face
+    inside a collection (.ttc). None without fontconfig."""
     if not face or not shutil.which("fc-match"):
         return None
-    out = subprocess.run(["fc-match", "-f", "%{file}", face], capture_output=True, text=True)
-    return out.stdout.strip() or None
+    try:
+        out = subprocess.run(["fc-match", "-f", "%{file}\n%{index}", face], capture_output=True,
+                             text=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    file, _, index = out.stdout.partition("\n")
+    if not file.strip():
+        return None
+    index = index.strip()
+    return f"{file.strip()}#{index}" if index.isdigit() and index != "0" else file.strip()
 
 
 @functools.lru_cache(maxsize=None)
 def _font(file: str):
+    """ImageFont at 100 px for ``file`` or ``file#index``."""
+    path, _, index = file.partition("#")
     try:
         from PIL import ImageFont
-        return ImageFont.truetype(file, 100)
+        return ImageFont.truetype(path, 100, index=int(index) if index.isdigit() else 0)
     except Exception:
         return None
 
@@ -70,7 +81,7 @@ def set_fonts(brand) -> None:
         latin = brand.path(f"fonts.{role}.file") if spec.get("file") else None
         ea = brand.path(f"fonts.{role}.file_east_asian") if spec.get("file_east_asian") else None
         latin = str(latin) if latin and Path(latin).exists() else _match(spec.get("latin"))
-        ea = str(ea) if ea and Path(ea).exists() else _match(spec.get("east_asian"))
+        ea = str(ea) if ea and Path(ea).exists() else _match(spec.get("east_asian"))  # "file#index" for .ttc
         if latin and _font(latin):
             _FILES[role] = (latin, ea if ea and _font(ea) else latin)
 

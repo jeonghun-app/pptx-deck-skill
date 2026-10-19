@@ -20,6 +20,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from deckkit import load_brand, LAYOUTS  # noqa: E402
+from deckkit.brand import deck_language  # noqa: E402
 from deckkit import exhibits, measure, story  # noqa: E402
 from deckkit.canvas import CHARTS  # noqa: E402
 from deckkit.frameworks import SYMBOLS, is_symbol_cell, normalize_symbol  # noqa: E402
@@ -54,15 +55,34 @@ def lint_footer(add, i, s, brand, language, width):
         add("WARN", i, f"exhibit footer runs to {lines} lines; keep it to 3 and move detail to the notes")
 
 
+def _number(value) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
 def lint_chart(add, i, ch, where=""):
     kind = ch.get("type", "column")
     if kind not in CHARTS:
         add("ERROR", i, f"{where}unsupported chart type '{kind}' (available: {', '.join(CHARTS)})")
         return
+    for key in ("min", "max"):
+        if ch.get(key) is not None and not _number(ch[key]):
+            add("ERROR", i, f"{where}chart {key} must be a number")
+            return
+    if _number(ch.get("min")) and _number(ch.get("max")) and float(ch["min"]) >= float(ch["max"]):
+        add("ERROR", i, f"{where}chart min ({ch['min']}) must be below max ({ch['max']})")
+        return
     if kind == "waterfall":
-        if not ch.get("steps"):
+        start = ch.get("start")
+        if start is not None and not (isinstance(start, dict) and _number(start.get("value"))):
+            add("ERROR", i, f"{where}waterfall start needs a label and a numeric value: {{label: ..., value: 100}}")
+            return
+        if not isinstance(ch.get("steps"), list) or not ch.get("steps"):
             add("ERROR", i, f"{where}waterfall without steps")
-        elif any(not isinstance(st.get("value"), (int, float)) for st in ch["steps"]):
+            return
+        if any(not isinstance(st, dict) for st in ch["steps"]):
+            add("ERROR", i, f"{where}waterfall steps are {{label, value}} items")
+            return
+        if any(not isinstance(st.get("value"), (int, float)) for st in ch["steps"]):
             add("ERROR", i, f"{where}every waterfall step needs a numeric value")
         elif exhibits.waterfall_low(ch) < 0:
             add("ERROR", i, f"{where}waterfall running total goes below zero; rebase the start or split the bridge")
@@ -90,6 +110,9 @@ def lint_chart(add, i, ch, where=""):
     if kind == "line" and len(series) > 6 and ch.get("highlight_series") is None:
         add("WARN", i, f"{where}{len(series)} lines with no highlight; highlight one series or use panels")
     est = ch.get("estimates")
+    if est is not None and not isinstance(est, dict):
+        add("ERROR", i, f"{where}estimates is an object: {{from: <category>}}")
+        est = None
     if est and kind not in exhibits.ANNOTATED:
         add("ERROR", i, f"{where}estimates work on column, bar and line charts, not '{kind}'")
     elif est and exhibits.category_index(cats, est.get("from")) is None:
@@ -159,7 +182,7 @@ def lint(deck_path: Path, brand_path=None):
     width = brand.content_width
     lines_allowed = story.title_lines(brand, meta)
     read = story.mode(meta) == "read"
-    language = str(meta.get("language") or brand.get("copy.default_language", "en"))
+    language = deck_language(meta, brand)
     run = 1
     for i, s in enumerate(slides, start=1):
         name = s.get("layout", "bullets")
@@ -292,7 +315,7 @@ def lint_story(slides, meta, brand, add):
     content = [(i, s) for i, s in enumerate(slides, start=1) if s.get("layout", "bullets") not in STRUCTURAL]
     measure_chars = brand.get("type.max_measure")
     body = float(brand["type.body"])
-    language = str(meta.get("language") or brand.get("copy.default_language", "en"))
+    language = deck_language(meta, brand)
     default_label = brand.get("copy.source_label") or ("출처" if language == "ko" else "Source")
     prefixes = {}
     seen_section = False
@@ -314,8 +337,10 @@ def lint_story(slides, meta, brand, add):
         if s.get("next_steps"):
             with_steps += 1
             ns = s["next_steps"]
-            items = ns if isinstance(ns, list) else (ns or {}).get("items", [])
-            if not 2 <= len(items) <= 4:
+            if not isinstance(ns, (list, dict)):
+                add("ERROR", i, "next_steps is a list of items or {label, items: [...]}")
+            items = ns if isinstance(ns, list) else (ns.get("items") or [] if isinstance(ns, dict) else None)
+            if items is not None and not 2 <= len(items) <= 4:
                 add("WARN", i, f"next_steps has {len(items)} items; keep 2–4")
             if LAYOUTS[name].structural or s.get("full_bleed"):
                 add("WARN", i, f"next_steps is ignored on a '{name}' slide without the content frame")
@@ -325,6 +350,9 @@ def lint_story(slides, meta, brand, add):
                 add("WARN", i, f"summary has {len(blocks)} blocks; use 2–4 (one per section) and split the rest")
             for k, blk in enumerate(blocks, start=1):
                 if not isinstance(blk, dict) or blk.get("section") is None:
+                    continue
+                if not _number(blk["section"]):
+                    add("ERROR", i, f"summary block {k}: section is a number (1 for the first section)")
                     continue
                 n = int(blk["section"])
                 if not 1 <= n <= len(sections):

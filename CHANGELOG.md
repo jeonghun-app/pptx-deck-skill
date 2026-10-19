@@ -42,6 +42,20 @@ their own point, framework layouts, and a reading structure for long decks.
   `exhibits.deck.yaml`, `frameworks.deck.yaml`, `story.deck.yaml`.
 
 ### Changed
+Visible defaults that differ from 0.1.0, each with its opt-out:
+- Line charts label each line at its end (series name and last value) instead
+  of every point, and drop the legend. Opt out with `end_labels: false`
+  (or `labels: true` for point labels).
+- Full-width reading text (leads, bullets, subtitles) is capped at about 75
+  characters per line (`type.max_measure`); narrow columns are unchanged.
+  Opt out with `type.max_measure: null`.
+- Several series on one chart get tints of the accent when the brand keeps the
+  default palette. A brand with its own `colors.series` keeps its palette, as
+  before; set `colors.series_mode: ramp` or `palette` to choose explicitly.
+- Line chart axes span the data (bars still start at zero), so narrow-range
+  trends stay readable. Set `min:` / `max:` to fix the axis.
+
+Other changes:
 - Bullet lists are one text box with paragraphs, so gaps stay even however the
   lines break.
 - Cover, section, closing, statement and quote titles sit on a fixed baseline
@@ -52,6 +66,14 @@ their own point, framework layouts, and a reading structure for long decks.
 - Example brand `warm-editorial`: darker accent for readable eyebrows.
 
 ### Fixed
+- Numeric category references (`highlight: 3`) always mean the index, as in
+  0.1.0; write `"3"` to pick a category named 3.
+- Malformed chart, waterfall, estimate, next-steps and summary keys are
+  reported by the linter instead of stopping the build with a traceback.
+- Tracker tabs and other monospace text are measured in the monospace face,
+  including faces inside font collections.
+- Language codes such as `ko-KR` select the Korean wording everywhere.
+- Matrix commentary follows the same column rules as charts and tables.
 - A sub-bullet in the sample deck was split at a comma; the deck format
   reference now explains quoting text with commas in `[ ... ]` lists.
 

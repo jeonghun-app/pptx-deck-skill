@@ -192,7 +192,7 @@ that section's number. Blocks are columns on the grid with a hairline on top,
 heading at `type.lead`, thesis and points at `type.body`. `so_what` is a
 `colors.surface_alt` band with an accent rule; its height comes out of the body.
 The lint warns when a block heading differs from the section title it refers to,
-and when a deck of 10+ content slides has no summary. Points are noun phrases or
+and when a deck with 10+ content slides and two or more sections has no summary. Points are noun phrases or
 short sentences, 2–3 per block.
 
 ### `two_column`
@@ -283,8 +283,11 @@ WARN for `rag` cells without a label, text mixed into a symbol column, and
 `chart`: `type` (`column`, `bar`, `stacked_column`, `stacked_bar`, `line`,
 `waterfall`, `doughnut`, `pie`), `categories`, `series: [{name, values}]`,
 `unit` (the line above the chart: metric, scope, period, unit), `number_format`
-(e.g. `'0%'`, `'#,##0'`), `labels` (direct data labels; default true, which
-also hides the value axis), `legend`, `min` / `max` (value axis bounds).
+(e.g. `'0%'`, `'#,##0'`), `labels` (direct data labels, which also hide the value axis; default true,
+except on line charts with end labels), `legend`, `min` / `max` (value axis
+bounds; bars always start at zero, lines span their data unless it nearly
+reaches zero). Categories in `highlight`, `estimates` and annotations are an
+index (`3`) or a name in quotes (`"2024"`).
 
 | Key | Effect |
 |---|---|

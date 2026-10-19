@@ -570,7 +570,7 @@ class Canvas:
         single = n_series == 1
         horizontal = kind in exhibits.HORIZONTAL
         est = exhibits.estimate_start(cats, estimates)
-        suffix = (estimates or {}).get("suffix")
+        suffix = estimates.get("suffix") if isinstance(estimates, dict) else None
         display = [f"{cat}{suffix}" if suffix and est is not None and j >= est else cat
                    for j, cat in enumerate(cats)]
         labels, end_labels = exhibits.label_modes(kind, n_series, labels, end_labels)

@@ -10,6 +10,8 @@ written as a manual inner layout and the value axis is pinned, which makes
 """
 from __future__ import annotations
 
+import functools
+
 import math
 import re
 from dataclasses import dataclass, field
@@ -107,7 +109,7 @@ def auto_notes(spec: dict, brand, language: str = "en") -> list:
     w = words(brand, language)
     out = []
     for ch in chart_specs(spec):
-        est = ch.get("estimates")
+        est = estimates_of(ch)
         if not est or ch.get("type", "column") not in ANNOTATED:  # bars and lines only
             continue
         if est.get("note"):
@@ -186,20 +188,29 @@ def axis_range(lo: float, hi: float):
 
 
 def category_index(categories, ref):
-    """A category given by name, or by index when no category has that name."""
-    if ref is None:
+    """A category given by index (an int, as in earlier versions) or by name (a string).
+
+    ``highlight: 3`` is always the fourth category, even when the categories are
+    numbers; write ``highlight: "3"`` to pick the category named 3.
+    """
+    if ref is None or isinstance(ref, bool):
         return None
     names = [str(cat) for cat in categories]
-    if str(ref) in names:
-        return names.index(str(ref))
-    if isinstance(ref, int) and -len(names) <= ref < len(names):
-        return ref % len(names)
-    return None
+    if isinstance(ref, int):
+        return ref % len(names) if -len(names) <= ref < len(names) else None
+    return names.index(str(ref)) if str(ref) in names else None
+
+
+def estimates_of(ch: dict):
+    """The chart's ``estimates`` object, or None when it is missing or malformed
+    (the linter reports the malformed form)."""
+    est = ch.get("estimates")
+    return est if isinstance(est, dict) else None
 
 
 def estimate_start(categories, estimates):
     """Index of the first estimated category, or None."""
-    return category_index(categories, (estimates or {}).get("from")) if estimates else None
+    return category_index(categories, estimates.get("from")) if isinstance(estimates, dict) else None
 
 
 def as_list(value):
@@ -218,8 +229,23 @@ def readable(brand, color: str, background: str = "surface", fallback: str = "mu
     return brand.hex(fallback)
 
 
+def series_mode(brand) -> str:
+    """``ramp`` or ``palette``. Unset (null) means ramp, unless the brand defines its
+    own ``colors.series`` — then that palette is used, as in earlier versions."""
+    mode = brand.get("colors.series_mode")
+    if mode:
+        return str(mode)
+    return "ramp" if brand.get("colors.series") == _default_series() else "palette"
+
+
+@functools.lru_cache(maxsize=1)
+def _default_series():
+    from .brand import load_brand
+    return load_brand().get("colors.series")
+
+
 def default_series_kind(brand, kind: str, n_series: int) -> str:
-    if brand.get("colors.series_mode", "ramp") != "ramp":
+    if series_mode(brand) != "ramp":
         return "nominal"
     if kind.startswith("stacked") or (kind in ("column", "bar", "line") and n_series > 1):
         return "ordered"
@@ -401,7 +427,11 @@ def ref_label(a: dict, series, number_format) -> str:
 
 def data_extent(kind: str, series, annotations=()):
     """(lo, hi) of what the plot must show: data, stack tops, reference lines.
-    Bars always include zero; a line includes zero unless it goes negative."""
+
+    Bars encode length, so they always include zero. A line encodes change: it
+    spans its data, and includes zero only when the data already reaches close
+    to it, so a narrow-range trend stays readable.
+    """
     n = max((len(s["values"]) for s in series), default=0)
     if kind.startswith("stacked") or kind == "waterfall":
         vals = stack_totals(series, n)
@@ -410,6 +440,9 @@ def data_extent(kind: str, series, annotations=()):
     vals += [v for v in (ref_value(a, series) for a in annotations or [] if a.get("kind") == "ref_line")
              if v is not None]
     lo, hi = (min(vals), max(vals)) if vals else (0.0, 1.0)
+    if kind == "line" and (lo > 0 and lo > 0.3 * hi or hi < 0 and hi < 0.3 * lo):
+        pad = (hi - lo) * 0.1 or abs(hi) * 0.05 or 1.0
+        return lo - pad, hi + pad
     return min(lo, 0.0), max(hi, 0.0)
 
 

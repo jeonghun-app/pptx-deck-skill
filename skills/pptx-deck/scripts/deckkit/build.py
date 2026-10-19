@@ -11,7 +11,7 @@ from pptx.enum.shapes import PP_PLACEHOLDER
 from pptx.util import Pt
 
 from . import measure, story
-from .brand import Brand, load_brand
+from .brand import Brand, deck_language, load_brand
 from .canvas import Canvas, Warnings
 from .layouts import LAYOUTS
 
@@ -212,7 +212,7 @@ def build(deck_path: str | Path, out_path: str | Path, brand_path: str | Path | 
         role = ROLE.get(name, "content")
         slide = ctx.new_slide(role if name in ROLE else ("blank" if name == "image" and s.get("full_bleed") else "content"))
         c = Canvas(slide, brand, i, warnings)
-        c.language = str(meta.get("language") or brand.get("copy.default_language", "en"))
+        c.language = deck_language(meta, brand)
         bg_role = role if role != "content" else ("cover" if s.get("dark") else "content")
         c.dark = bool(ctx.background(c, bg_role, s))
         ctx.section = ctx.section_at.get(i, ctx.section)

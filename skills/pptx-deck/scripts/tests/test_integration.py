@@ -93,3 +93,94 @@ def test_matrix_commentary_is_supported(tmp_path):
     p = tmp_path / "m.deck.yaml"
     p.write_text(yaml.safe_dump({"meta": CONTRACT, "slides": [spec]}), encoding="utf-8")
     assert not any("commentary has no effect" in f["message"] for f in lint(p))
+
+
+# -- review regressions ------------------------------------------------------
+
+def chart_slide(chart, **extra):
+    return {"layout": "chart", "title": "The value changed over the four periods", "notes": "n",
+            "source": "s", "chart": chart, **extra}
+
+
+def test_numeric_highlight_is_an_index(tmp_path):
+    from deckkit import exhibits
+    assert exhibits.category_index([1, 2, 3, 4, 5], 3) == 3
+    assert exhibits.category_index([1, 2, 3, 4, 5], "3") == 2
+    assert exhibits.category_index(["a", "b"], 5) is None
+
+
+def test_line_axis_spans_narrow_data_bars_keep_zero():
+    from deckkit import exhibits
+    lo, hi = exhibits.data_extent("line", [{"name": "s", "values": [95.1, 96.3, 97.8, 99.2]}])
+    assert lo > 90 and hi < 101
+    lo, _ = exhibits.data_extent("column", [{"name": "s", "values": [95.1, 99.2]}])
+    assert lo == 0
+    lo, _ = exhibits.data_extent("line", [{"name": "s", "values": [3, 40]}])
+    assert lo == 0  # data close to zero keeps the zero baseline
+
+
+def test_own_series_palette_is_kept(tmp_path):
+    from deckkit import exhibits
+    own = tmp_path / "b.yaml"
+    own.write_text("colors: {series: [112233, 445566, 778899]}\n", encoding="utf-8")
+    assert exhibits.series_mode(load_brand(own)) == "palette"
+    assert exhibits.series_mode(load_brand()) == "ramp"
+    forced = tmp_path / "f.yaml"
+    forced.write_text("colors: {series: [112233, 445566], series_mode: ramp}\n", encoding="utf-8")
+    assert exhibits.series_mode(load_brand(forced)) == "ramp"
+
+
+@pytest.mark.parametrize("bad", [
+    {"type": "column", "categories": ["a", "b"], "series": [{"name": "s", "values": [1, 2]}], "min": 100, "max": 0},
+    {"type": "waterfall", "start": 100, "steps": [{"label": "x", "value": 3}]},
+    {"type": "waterfall", "start": {"label": "S"}, "steps": [{"label": "x", "value": 3}]},
+    {"type": "line", "categories": ["a", "b"], "series": [{"name": "s", "values": [1, 2]}], "estimates": "b"},
+])
+def test_malformed_chart_keys_are_lint_errors(tmp_path, bad):
+    p = tmp_path / "d.deck.yaml"
+    p.write_text(yaml.safe_dump({"meta": CONTRACT, "slides": [chart_slide(bad)]}), encoding="utf-8")
+    assert any(f["level"] == "ERROR" for f in lint(p))  # reported, no traceback
+
+
+def test_malformed_story_keys_are_lint_errors(tmp_path):
+    slides = [{"layout": "section", "number": 1, "title": "One"},
+              {"layout": "bullets", "title": "A point that closes the argument here", "bullets": ["a"],
+               "notes": "n", "next_steps": "Do X"},
+              {"layout": "summary", "title": "The summary of the argument in one line", "notes": "n",
+               "blocks": [{"section": "two", "points": ["a"]}, {"heading": "H", "points": ["b"]}]}]
+    p = tmp_path / "d.deck.yaml"
+    p.write_text(yaml.safe_dump({"meta": CONTRACT, "slides": slides}), encoding="utf-8")
+    msgs = [f["message"] for f in lint(p) if f["level"] == "ERROR"]
+    assert any("next_steps" in m for m in msgs) and any("section is a number" in m for m in msgs)
+
+
+def test_regional_language_code_is_korean(tmp_path):
+    from deckkit.brand import deck_language
+    assert deck_language({"language": "ko-KR"}, load_brand()) == "ko"
+    assert deck_language({"language": "KO_kr"}, load_brand()) == "ko"
+    prs, _ = deck(tmp_path, [chart_slide({"type": "column", "categories": ["a", "b"],
+                                          "series": [{"name": "s", "values": [1, 2]}]})],)
+    meta = {**CONTRACT, "language": "ko-KR"}
+    p = tmp_path / "k.deck.yaml"
+    p.write_text(yaml.safe_dump({"meta": meta, "slides": [chart_slide(
+        {"type": "column", "categories": ["a", "b"], "series": [{"name": "s", "values": [1, 2]}]},
+        source="예시 데이터")]}, allow_unicode=True), encoding="utf-8")
+    build(p, tmp_path / "k.pptx")
+    texts = [s.text_frame.text for s in Presentation(str(tmp_path / "k.pptx")).slides[0].shapes
+             if s.has_text_frame]
+    assert any(t.startswith("출처") for t in texts)
+
+
+def test_next_steps_without_items_draws_no_band(tmp_path):
+    prs, report = deck(tmp_path, [{"layout": "bullets", "title": "A point that closes the argument",
+                                   "bullets": ["a"], "notes": "n", "next_steps": {"label": "X"}}])
+    assert not any(s.name == "Next steps" for s in prs.slides[0].shapes)
+    assert not any("overflow" in w["message"] for w in report["warnings"])
+
+
+def test_mono_role_uses_monospace_face():
+    m = measure._match("monospace")
+    if not m:
+        pytest.skip("fontconfig not available")
+    measure.set_fonts(load_brand())
+    assert measure.text_width("iiii", 10, "mono") == pytest.approx(measure.text_width("MMMM", 10, "mono"), rel=0.05)

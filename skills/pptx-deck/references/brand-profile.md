@@ -89,7 +89,7 @@ and `body` one step smaller. Do not introduce sizes outside the scale.
 | `dark`, `on_dark`, `on_dark_body` | Dark slides and their text |
 | `positive`, `warning`, `negative` | Status — always paired with a word or shape, never color alone (table check marks and status dots use them) |
 | `series` | Chart series for nominal data (no order), in order. Highlights always use `accent` |
-| `series_mode` | `ramp` (default): ordered series (stacks, several series on one chart) get tints of `accent` from dark to light. `palette`: they take `series` too |
+| `series_mode` | `ramp`: ordered series (stacks, several series on one chart) get tints of `accent` from dark to light. `palette`: they take `series` too. `null` (default): `ramp`, unless the brand sets its own `series` — then that palette is kept |
 
 Check text tokens with `deckkit.contrast(a, b)`; the extractor and the design
 lint report low-contrast pairs. One accent per slide is the default; record a

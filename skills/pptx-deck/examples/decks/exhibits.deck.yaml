@@ -115,6 +115,7 @@ slides:
     title: Larger accounts now make up half of revenue
     chart:
       type: stacked_bar
+      series_kind: ordered   # the order matters, so the ramp is explicit
       categories: ["2024", "2025", "2026"]
       series:
         - { name: Large, values: [0.36, 0.43, 0.50] }
