@@ -429,9 +429,21 @@ def ref_value(a: dict, series):
     return None
 
 
+def _decimals(value) -> int:
+    text = f"{float(value):.10g}"
+    return len(text.split(".")[1]) if "." in text and "e" not in text else 0
+
+
 def ref_label(a: dict, series, number_format) -> str:
+    """Label text of a reference line. The line sits at the exact value; a computed
+    mean is printed one decimal finer than the data, not with every digit."""
     text = str(a.get("label") or "{value}")
-    return text.replace("{value}", format_number(ref_value(a, series), number_format))
+    value = ref_value(a, series)
+    if value is not None and number_format is None and not isinstance(a.get("value"), (int, float)):
+        si = int(a.get("series", 0))
+        data = [v for v in series[si]["values"] if v is not None] if 0 <= si < len(series) else []
+        value = round(value, min(4, max((_decimals(v) for v in data), default=0) + 1))
+    return text.replace("{value}", format_number(value, number_format))
 
 
 def data_extent(kind: str, series, annotations=()):

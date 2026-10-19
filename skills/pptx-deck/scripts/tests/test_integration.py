@@ -251,3 +251,14 @@ def test_general_format_keeps_small_values():
     assert exhibits.format_number(0.0014) == "0.0014"
     assert exhibits.format_number(0.0145) == "0.0145"
     assert exhibits.format_number(42.0) == "42"
+
+
+def test_computed_mean_label_is_rounded_but_line_is_exact():
+    from deckkit import exhibits
+    series = [{"name": "s", "values": [31, 34, 38]}]
+    a = {"kind": "ref_line", "value": "mean", "label": "Average {value}"}
+    assert exhibits.ref_label(a, series, None) == "Average 34.3"
+    assert exhibits.ref_value(a, series) == pytest.approx(34.3333333, rel=1e-6)
+    small = [{"name": "s", "values": [0.0012, 0.0013, 0.0015]}]
+    assert exhibits.ref_label(a, small, None) == "Average 0.0013"
+    assert exhibits.ref_label({"kind": "ref_line", "value": 40, "label": "{value}"}, series, None) == "40"
