@@ -91,12 +91,21 @@ what would change it. Do not describe only the chosen option's strengths.
   points elsewhere.
 - Never fill an unchecked cell with zero or "met".
 - Without scores, write met / partial / unverified with the basis.
+- For ordinal ratings use one symbol family per table (`table` `symbols`:
+  Harvey balls, check / partial / cross, status dots, tiers), the legend line
+  under the table, and `na` for anything not assessed: a dash, distinct from
+  zero. Status dots always carry a word, and every family differs in shape or
+  lightness as well as color, so the table survives greyscale printing.
 - A weighted total requires that you can explain scale, direction, weight basis,
   and sensitivity.
 
 With only qualitative classification, use a categorical matrix. If dots are
 plotted without an origin, a scale, and a scoring basis, do not reproduce their
-positions as numbers. Attach the next action, owner, and exit condition to each
+positions as numbers. The `matrix` layout enforces the split: `basis:
+qualitative` lists items inside named cells and tags the exhibit "Qualitative
+placement"; `basis: measured` needs `x`/`y` values on declared scales, draws
+thresholds at stated values and requires a source. Name both poles of each axis
+in words and name every cell, so the categories can be repeated in discussion. Attach the next action, owner, and exit condition to each
 classification result.
 
 ### Objective -> execution -> shared foundation: separate hierarchy from support scope
@@ -117,7 +126,9 @@ Equal-width phase columns do not mean equal durations. A month axis places
 activity durations and events in time. Do not mix the two.
 
 - If order matters, use a phase x workstream table. Do not widen a phase just
-  because it takes longer.
+  because it takes longer. A chevron header with attribute rows beneath
+  (`process` `style: chevron` + `rows`) shows the order once; the column
+  alignment then carries the correspondence, so no arrows are needed inside.
 - If schedule matters, use bars proportional to a real time axis: events are
   points, durations are bars.
 - If responsibility matters, map performing and approving roles and outputs to
