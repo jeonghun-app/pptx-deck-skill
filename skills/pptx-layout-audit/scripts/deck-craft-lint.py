@@ -121,9 +121,15 @@ def load_brand(path):
         collect(v)
     if palette:
         palette |= {"FFFFFF", "000000"}
-        # light tints the generator derives for highlighted cells, cards and muted bars
+        # light tints the generator derives for highlighted cells, cards and muted bars,
+        # and the chart key swatches of ordered (accent ramp) and grey context series
         cols_ = data.get("colors") or {}
-        for key, amounts in (("accent", (0.9, 0.92, 0.93)), ("muted", (0.45,))):
+        chart = data.get("chart") or {}
+        light = float(chart.get("ramp_light", 0.7))
+        lo, hi = (float(v) for v in chart.get("context_tints", (0.45, 0.75)))
+        ramp = {light * i / (n - 1) for n in range(2, 9) for i in range(n)}
+        context = {lo + (hi - lo) * i / (n - 1) for n in range(2, 9) for i in range(n)}
+        for key, amounts in (("accent", {0.9, 0.92, 0.93} | ramp), ("muted", {0.45} | context)):
             if cols_.get(key) and HEX_RE.match(str(cols_[key])):
                 palette |= {tint(str(cols_[key]).lstrip("#").upper(), a) for a in amounts}
         cfg["palette"] = palette

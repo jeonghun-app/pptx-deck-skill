@@ -16,14 +16,15 @@ from pathlib import Path
 
 from lxml import etree
 from pptx.chart.data import CategoryChartData
-from pptx.enum.chart import XL_CHART_TYPE, XL_LABEL_POSITION, XL_LEGEND_POSITION
+from pptx.enum.chart import XL_CHART_TYPE, XL_LABEL_POSITION, XL_LEGEND_POSITION, XL_MARKER_STYLE
+from pptx.enum.dml import MSO_LINE_DASH_STYLE
 from pptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE
 from pptx.enum.text import MSO_ANCHOR, MSO_AUTO_SIZE, PP_ALIGN
 from pptx.oxml.ns import qn
 from pptx.util import Pt
 
-from .brand import Brand
-from . import measure
+from .brand import Brand, contrast
+from . import exhibits, measure
 
 ALIGN = {"left": PP_ALIGN.LEFT, "center": PP_ALIGN.CENTER, "right": PP_ALIGN.RIGHT,
          "justify": PP_ALIGN.JUSTIFY}
@@ -37,6 +38,7 @@ CHARTS = {
     "stacked_bar": XL_CHART_TYPE.BAR_STACKED, "stacked_column": XL_CHART_TYPE.COLUMN_STACKED,
     "line": XL_CHART_TYPE.LINE_MARKERS, "doughnut": XL_CHART_TYPE.DOUGHNUT,
     "pie": XL_CHART_TYPE.PIE,
+    "waterfall": XL_CHART_TYPE.COLUMN_STACKED,  # invisible base series under the steps
 }
 # Removes PowerPoint's default table style so rules come only from the brand.
 NO_STYLE_TABLE = "{2D5ABB26-0587-4C30-8999-92F81FD0307C}"
@@ -497,17 +499,72 @@ class Canvas:
 
     # -- chart --------------------------------------------------------------
     def chart(self, x, y, w, h, kind, categories, series, *, highlight=None, number_format=None,
-              labels=True, legend=None, gap=60, name=None):
+              labels=True, legend=None, gap=60, name=None, highlight_series=None, series_kind=None,
+              end_labels=None, estimates=None, annotations=None, vmin=None, vmax=None,
+              value_range=None, min_pads=None):
         """Native chart styled from the brand.
 
         ``series`` is ``[{"name": str, "values": [...]}, ...]``. With one series,
-        ``highlight`` is a category index drawn in the accent while the others
-        stay muted. With several series, colors follow ``colors.series``.
+        ``highlight`` is a category index (or list) drawn in the accent while the
+        others stay muted. ``highlight_series`` (index or list) does the same for
+        whole series. Otherwise ``series_kind`` picks the colors: ``ordered`` is a
+        ramp of accent tints from dark to light, ``nominal`` is ``colors.series``;
+        the default comes from ``colors.series_mode``.
+
+        ``end_labels`` (line charts; default with up to 6 series) writes the series
+        name and last value at each line's right end instead of a legend.
+        ``estimates`` (``{from: category}``) dashes lines and lightens bars from that
+        category on. ``annotations`` adds reference lines, bands, callouts and
+        computed deltas. Those need a known plot rectangle, so the plot area is
+        then written as a manual layout and the value axis pinned; ``vmin``/``vmax``
+        override the range and ``value_range``/``min_pads`` let panels share one
+        scale and baseline. ``labels=None`` means on unless end labels are drawn.
+        With fixed geometry the returned frame carries ``plot`` (an ``exhibits.Plot``)
+        for custom renderers that draw more on the data.
         """
+        b = self.brand
+        cats = list(categories)
+        n_series = len(series)
+        single = n_series == 1
+        horizontal = kind in exhibits.HORIZONTAL
+        est = exhibits.estimate_start(cats, estimates)
+        suffix = (estimates or {}).get("suffix")
+        display = [f"{cat}{suffix}" if suffix and est is not None and j >= est else cat
+                   for j, cat in enumerate(cats)]
+        labels, end_labels = exhibits.label_modes(kind, n_series, labels, end_labels)
+        if legend is None:
+            legend = not single and not end_labels
+        annotations = list(annotations or [])
+        if annotations and kind not in exhibits.ANNOTATED:
+            self.warn(f"annotations work on column, bar and line charts; ignored on '{kind}'")
+            annotations = []
+        fixed = kind in exhibits.ANNOTATED and (bool(annotations or end_labels or value_range or min_pads)
+                                                or vmin is not None or vmax is not None)
+        colors = exhibits.series_colors(b, kind, n_series, series_kind, highlight_series)
+        focus = set(exhibits.as_list(highlight_series))
+        marked = {exhibits.category_index(cats, ref) for ref in exhibits.as_list(highlight)} - {None}
+        context = b.tint("muted", float((b.get("chart.context_tints") or [0.45])[0]))
+        ends = exhibits.end_texts(series, labels, number_format) if end_labels else []
+        plan = geom = None
+        if fixed:
+            plan = exhibits.plan_chart(self, kind, w, h, display, series, labels=labels,
+                                       number_format=number_format, legend=bool(legend),
+                                       end_texts=[t for _, _, t in ends], annotations=annotations,
+                                       vmin=vmin, vmax=vmax, value_range=value_range,
+                                       min_pads=min_pads, gap=gap)
+            geom = plan.plot(x, y, w, h, len(cats), horizontal)
+            exhibits.draw_bands(self, geom, plan, cats, annotations)  # behind the chart
+        # An estimated stretch of a line is its own dashed series from the last actual
+        # point on: renderers that ignore per-point line styles still show the dash.
+        split = kind == "line" and bool(est)
         data = CategoryChartData()
-        data.categories = categories
+        data.categories = display
         for s in series:
-            data.add_series(s["name"], s["values"])
+            data.add_series(s["name"], s["values"][:est] + [None] * (len(cats) - est) if split else s["values"])
+        if split:
+            label = exhibits.words(b, getattr(self, "language", "en"))["estimate_series"]
+            for s in series:
+                data.add_series(label.format(s["name"]), [None] * (est - 1) + list(s["values"][est - 1:]))
         frame = self.slide.shapes.add_chart(CHARTS[kind], Pt(x), Pt(y), Pt(w), Pt(h), data)
         if name:
             frame.name = name
@@ -517,9 +574,6 @@ class Canvas:
         chart.font.color.rgb = self.brand.rgb(self.muted)
         fonts = self.brand["fonts.body"]
         chart.font.name = fonts.get("latin")
-        single = len(series) == 1
-        if legend is None:
-            legend = not single
         chart.has_legend = bool(legend)
         if legend:
             chart.legend.position = XL_LEGEND_POSITION.TOP
@@ -542,33 +596,58 @@ class Canvas:
             if labels:
                 va.visible = False
                 va.has_major_gridlines = False
+            elif number_format:
+                va.tick_labels.number_format = number_format
+                va.tick_labels.number_format_is_linked = False
             ca = chart.category_axis
             ca.format.line.color.rgb = self.brand.rgb("line")
             ca.tick_labels.font.size = Pt(self.size("caption"))
             ca.tick_labels.font.color.rgb = self.brand.rgb(self.body_color)
             if kind in ("bar", "stacked_bar"):
                 ca.reverse_order = True  # first category on top, as read
-        muted = self.brand.tint(self.brand.hex("muted"), 0.45)
+
+        def point_color(i, j):
+            if single and marked and kind not in ("line",):
+                return "accent" if j in marked else context
+            return colors[i]
+
         for i, s in enumerate(plot.series):
             fmt = s.format
-            color = self.brand.series(i)
             if kind == "line":
-                fmt.line.color.rgb = self.brand.rgb(color)
-                fmt.line.width = Pt(2.25 if i == 0 else 1.5)
+                k = i % n_series  # estimate series follow the actual ones
+                lead = k in focus if focus else k == 0
+                fmt.line.color.rgb = b.rgb(colors[k])
+                fmt.line.width = Pt(2.25 if lead else 1.5)
+                if i >= n_series or est == 0:
+                    fmt.line.dash_style = MSO_LINE_DASH_STYLE.DASH
                 s.smooth = False
+                s.marker.style = XL_MARKER_STYLE.CIRCLE
+                s.marker.size = 5
+                s.marker.format.fill.solid()
+                s.marker.format.fill.fore_color.rgb = b.rgb(colors[k])
+                s.marker.format.line.color.rgb = b.rgb(colors[k])
                 continue
             fmt.fill.solid()
-            fmt.fill.fore_color.rgb = self.brand.rgb(color if not (single and highlight is not None) else muted)
+            fmt.fill.fore_color.rgb = b.rgb(colors[i] if not (single and marked) else context)
             if kind in ("pie", "doughnut"):
-                for j in range(len(categories)):
+                for j in range(len(cats)):
                     pt_ = s.points[j]
                     pt_.format.fill.solid()
-                    pt_.format.fill.fore_color.rgb = self.brand.rgb(
-                        self.brand.series(j) if highlight is None else ("accent" if j == highlight else muted))
-            elif single and highlight is not None:
-                pt_ = s.points[highlight]
-                pt_.format.fill.solid()
-                pt_.format.fill.fore_color.rgb = self.brand.rgb("accent")
+                    pt_.format.fill.fore_color.rgb = b.rgb(
+                        b.series(j) if not marked else ("accent" if j in marked else context))
+                continue
+            for j in range(len(cats)):
+                estimate = est is not None and j >= est
+                if not (estimate or (single and j in marked)):
+                    continue
+                base = point_color(i, j)
+                pfmt = s.points[j].format
+                pfmt.fill.solid()
+                pfmt.fill.fore_color.rgb = b.rgb(
+                    b.tint(base, float(b.get("chart.estimate_tint", 0.55))) if estimate else base)
+                if estimate:  # outlined in the actual color so the series stays recognisable
+                    pfmt.line.color.rgb = b.rgb(base)
+                    pfmt.line.width = Pt(0.75)
         if labels:
             plot.has_data_labels = True
             dl = plot.data_labels
@@ -581,7 +660,156 @@ class Canvas:
                 dl.position = XL_LABEL_POSITION.OUTSIDE_END
             elif kind == "line":
                 dl.position = XL_LABEL_POSITION.ABOVE
+            for i, s in enumerate(plot.series):
+                if split and i >= n_series:  # the joint point is labeled by the actual series
+                    self._series_labels(s, self.ink, number_format, XL_LABEL_POSITION.ABOVE, hide=[est - 1])
+                elif kind.startswith("stacked"):  # labels sit on the fill: pick the readable text color
+                    on = "on_accent" if contrast(b.hex("on_accent"), b.hex(colors[i])) > \
+                        contrast(b.hex(self.ink), b.hex(colors[i])) else self.ink
+                    if on != self.ink:
+                        self._series_labels(s, on, number_format, None)
+        if split and legend:
+            self._hide_legend_entries(chart, range(n_series, 2 * n_series))
+        if fixed:
+            self._fix_plot(chart, plan, w, h, see_through=any(a.get("kind") == "band" for a in annotations))
+            side = exhibits.draw_ref_lines(self, geom, series, annotations, number_format)
+            background = "dark" if self.dark else "surface"
+            side += [{"y": geom.pos(value), "text": text, "name": "End label",
+                      "color": exhibits.readable(b, colors[i], background, self.muted)}
+                     for i, value, text in ends]
+            exhibits.side_labels(self, geom, side, y, y + h)
+            exhibits.draw_lanes(self, geom, plan, kind, number_format, labels)
+            frame.plot = geom  # geometry for callers that draw more on the chart
         return frame
+
+    def _series_labels(self, ser, color, number_format, position, hide=()):
+        """Series-level data labels; they replace the chart-level ones for this series."""
+        dl = ser.data_labels
+        dl.show_value = True
+        dl.font.size = Pt(self.size("caption"))
+        dl.font.color.rgb = self.brand.rgb(color)
+        if number_format:
+            dl.number_format = number_format
+            dl.number_format_is_linked = False
+        if position is not None:
+            dl.position = position
+        for idx in hide:
+            lbl = etree.Element(qn("c:dLbl"))
+            etree.SubElement(lbl, qn("c:idx")).set("val", str(idx))
+            etree.SubElement(lbl, qn("c:delete")).set("val", "1")
+            dl._element.insert(0, lbl)
+
+    @staticmethod
+    def _hide_legend_entries(chart, indexes):
+        legend = chart._chartSpace.find(qn("c:chart")).find(qn("c:legend"))
+        anchor = legend.find(qn("c:legendPos"))
+        for idx in sorted(indexes, reverse=True):
+            entry = etree.Element(qn("c:legendEntry"))
+            etree.SubElement(entry, qn("c:idx")).set("val", str(idx))
+            etree.SubElement(entry, qn("c:delete")).set("val", "1")
+            anchor.addnext(entry)
+
+    def waterfall(self, x, y, w, h, spec, *, number_format=None, gap=50, name=None,
+                  value_range=None, min_pads=None):
+        """Bridge from a start value to an end value through signed steps.
+
+        ``spec`` holds ``steps: [{label, value}]`` and optionally ``start: {label,
+        value}`` and ``total`` (label of the end bar). Drawn as a stacked column
+        whose first series is an invisible base: rises in ``colors.positive``, falls
+        in ``colors.negative``, start and end in ``colors.ink``, each bar labeled.
+        """
+        b = self.brand
+        cats, rows, series = exhibits.waterfall_series(spec)
+        if exhibits.waterfall_low(spec) < 0:
+            self.warn("waterfall running total goes below zero; a stacked bridge cannot show it — "
+                      "rebase the start or split the bridge", "ERROR")
+        plan = exhibits.plan_chart(self, "waterfall", w, h, cats, series, labels=True,
+                                   number_format=number_format, value_range=value_range,
+                                   min_pads=min_pads)
+        plot = plan.plot(x, y, w, h, len(cats), False)
+        data = CategoryChartData()
+        data.categories = cats
+        for s in series:
+            data.add_series(s["name"], s["values"])
+        frame = self.slide.shapes.add_chart(CHARTS["waterfall"], Pt(x), Pt(y), Pt(w), Pt(h), data)
+        if name:
+            frame.name = name
+        chart = frame.chart
+        chart.has_title = False
+        chart.has_legend = False
+        chart.font.size = Pt(self.size("caption"))
+        chart.font.color.rgb = b.rgb(self.muted)
+        chart.font.name = b["fonts.body"].get("latin")
+        plot_ = chart.plots[0]
+        plot_.gap_width = gap
+        plot_.overlap = 100
+        fills = {"Total": self.ink, "Increase": "positive", "Decrease": "negative"}
+        for s in plot_.series:
+            if s.name == "Base":
+                s.format.fill.background()
+                s.format.line.fill.background()
+            else:
+                s.format.fill.solid()
+                s.format.fill.fore_color.rgb = b.rgb(fills[s.name])
+        va = chart.value_axis
+        va.visible = False
+        va.has_major_gridlines = False
+        ca = chart.category_axis
+        ca.format.line.color.rgb = b.rgb("line")
+        ca.tick_labels.font.size = Pt(self.size("caption"))
+        ca.tick_labels.font.color.rgb = b.rgb(self.body_color)
+        self._fix_plot(chart, plan, w, h)
+        cap = self.size("caption")
+        for j, (_, base, length, role, value) in enumerate(rows):
+            text = exhibits.format_number(value, number_format) if role == "total" \
+                else exhibits.signed(value, number_format)
+            a, z = plot.slot(j)
+            top = plot.pos(base + length)
+            self.text(a, top - cap * 1.4, z - a, cap * 1.4, text, size="caption", color=self.ink,
+                      align="center", anchor="bottom", wrap=False, check_fit=False, name="Value label")
+        frame.plot = plot
+        return frame
+
+    @staticmethod
+    def _fix_plot(chart, plan, w, h, see_through=False):
+        """Write the plot area as a manual inner layout and pin the value axis, so
+        shapes drawn at ``Plot.pos`` land on the data in any renderer."""
+        space = chart._chartSpace
+        plot_area = space.find(qn("c:chart")).find(qn("c:plotArea"))
+        for old in plot_area.findall(qn("c:layout")):
+            plot_area.remove(old)
+        layout = etree.Element(qn("c:layout"))
+        manual = etree.SubElement(layout, qn("c:manualLayout"))
+        left, top, right, bottom = plan.pads
+        for tag, val in (("layoutTarget", "inner"), ("xMode", "edge"), ("yMode", "edge"),
+                         ("x", left / w), ("y", top / h), ("w", (w - left - right) / w),
+                         ("h", (h - top - bottom) / h)):
+            etree.SubElement(manual, qn(f"c:{tag}")).set("val", f"{val:.5f}" if isinstance(val, float) else val)
+        plot_area.insert(0, layout)
+        va = chart.value_axis
+        va.minimum_scale = plan.lo
+        va.maximum_scale = plan.hi
+        if plan.step:
+            va.major_unit = plan.step
+        val_ax = va._element
+        if val_ax.find(qn("c:crossBetween")) is None:  # bars and points sit mid-slot
+            crosses = val_ax.find(qn("c:crosses"))
+            crosses = crosses if crosses is not None else val_ax.find(qn("c:crossesAt"))
+            between = etree.Element(qn("c:crossBetween"))
+            between.set("val", "between")
+            crosses.addnext(between)
+        if see_through:  # bands are drawn behind the chart; keep both areas unfilled
+            for parent, after in ((space, space.find(qn("c:chart"))), (plot_area, None)):
+                if parent.find(qn("c:spPr")) is not None:
+                    parent.remove(parent.find(qn("c:spPr")))
+                sp = etree.Element(qn("c:spPr"))
+                etree.SubElement(sp, qn("a:noFill"))
+                etree.SubElement(etree.SubElement(sp, qn("a:ln")), qn("a:noFill"))
+                if after is not None:
+                    after.addnext(sp)
+                else:
+                    ext = parent.find(qn("c:extLst"))
+                    (ext.addprevious(sp) if ext is not None else parent.append(sp))
 
 
 def svg_to_png(path: Path) -> Path | None:

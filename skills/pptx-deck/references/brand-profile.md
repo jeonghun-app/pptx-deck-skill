@@ -80,7 +80,8 @@ and `body` one step smaller. Do not introduce sizes outside the scale.
 | `on_accent` | Text on accent fills |
 | `dark`, `on_dark`, `on_dark_body` | Dark slides and their text |
 | `positive`, `warning`, `negative` | Status — always paired with a word or shape, never color alone (table check marks and status dots use them) |
-| `series` | Chart series in order; the first is the highlight series |
+| `series` | Chart series for nominal data (no order), in order. Highlights always use `accent` |
+| `series_mode` | `ramp` (default): ordered series (stacks, several series on one chart) get tints of `accent` from dark to light. `palette`: they take `series` too |
 
 Check text tokens with `deckkit.contrast(a, b)`; the extractor and the design
 lint report low-contrast pairs. One accent per slide is the default; record a
@@ -102,6 +103,18 @@ different rule in `guidelines.md` if your brand has one.
 The band is constant across slides so headlines do not move as slides advance.
 Leave a clear gap between `body_bottom` and `footer_y` (at least two body lines)
 so the footer reads as outside the content.
+
+### `chart`
+Tints derived from the colors above for charts (0 = the color itself, 1 = white).
+All have defaults, so a partial profile can leave the section out.
+
+| Key | Default | Used for |
+|---|---|---|
+| `ramp_light` | 0.7 | Lightest `accent` tint in an ordered series ramp |
+| `context_tints` | [0.45, 0.75] | Range of `muted` tints for grey context series and non-highlighted bars |
+| `estimate_tint` | 0.55 | Estimated bars: tint of their actual color, outlined in it |
+
+The design lint knows these tints, so chart keys drawn in them are on-brand.
 
 ### `chrome`
 `footer_text` (e.g. a confidentiality label), `page_numbers`, `footer_rule`,
@@ -138,6 +151,14 @@ built-in English or Korean text for the deck's `meta.language`:
 | `symbol_labels` | Legend words for table symbols, per family and value: `{harvey: {0..4, na}, check: {yes, partial, no, na}, rag: {g, a, r, na}, tier: {1, 2, 3, na}}`. Set only the values you want to rename | Harvey "None … Full", check "Met / Partly met / Not met", RAG "On track / At risk / Off track", tier "Tier 1 (strongest) … Tier 3", n/a "Not assessed" |
 
 A slide's own `legend: {value: text}` overrides `symbol_labels` for that table.
+
+`exhibit_labels` overrides the wording of exhibit footers and computed
+annotations; each key is null by default (built-in English or Korean text by
+`meta.language`) and `{}` marks where the value goes: `question` ("Q: {}"),
+`base` ("Base: {}"), `n` ("n = {}"), `as_of` ("As of {}"), `rounding`,
+`estimate_from` ("Values from {} on are estimates."), `estimate_suffix`
+("{} = estimate."), `estimate_series` (name of a line's estimated part in the
+chart data), `pp` (percentage-point unit, "%p" in Korean) and `x` (multiple).
 
 ### `icons`
 `path`: a folder of icons the organization licenses (PNG preferred; SVG needs
