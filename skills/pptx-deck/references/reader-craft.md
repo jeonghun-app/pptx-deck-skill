@@ -18,15 +18,23 @@ canvas.
 
 | Layer | Where | Job |
 |---|---|---|
-| Eyebrow | Above the headline (`layout.eyebrow_y`, `type.label`) | Topic and position — section name, `REFERENCE`, `(2/3)` |
+| Eyebrow | Above the headline (`layout.eyebrow_y`, `type.label`) | Topic and position — section number and name (`eyebrow: auto`), the item number on a drill-down page, `REFERENCE`, `(2/3)`. Never a second claim |
 | Headline | Title band (`layout.title_y`, `type.title`) | The conclusion — or, when evidence is incomplete, the research question |
 | **Sub-lead** (optional) | Directly under the headline, `type.lead` | **One reason or condition** the headline could not hold. Never repeats the headline |
 | **Exhibit label** (optional) | One line directly above the exhibit | **What is measured and by what criterion** — metric, unit, period, and n if there is a sample |
 | Exhibit → implication → source | Body band | The source stays grouped with its exhibit as one unit of meaning |
 
-- Headline: one line in the fixed title band (`layout.title_y`, `layout.title_h`).
+- Headline: one line in the fixed title band (`layout.title_y`, `layout.title_h`)
+  when presented; up to two lines (about 25 words, one sentence) in a read deck
+  (`meta.mode: read`), where the band reserves two lines on every content slide.
   If it does not fit, shorten the sentence; do not shrink the type or let it wrap
   into the body.
+- Reading text keeps its measure: a lead or list line holds at most
+  `type.max_measure` characters (75 by default, CJK counting about two). The
+  generator draws the lead and bullets that wide and leaves the rest of the row
+  empty; do not stretch reading text across the slide to fill it.
+- Question headline: answer it directly below in one sentence
+  (`lead_style: band` draws the lead as a tinted answer band).
 - Sub-lead: one line by default, up to two on reading slides. It does not need
   reason → number → prescription every time.
   Example — headline "Review wait time, not coding time, sets our lead time" /
@@ -185,6 +193,14 @@ focus; do not judge by the total count of saturated colors.
   problem → what to do → how → decision request. Close the substantive body with
   the decision or next action; the last actual page, after any appendix, is the
   closing slide (text from `copy.closing_title`).
+- The summary page (`summary`) uses the section titles verbatim and each
+  section's thesis; every section divider states that thesis as its `subtitle`.
+- Readers of distributed files jump. In long or read decks show the position on
+  every content page (`chrome.tracker`: `tabs` or `dots`), never in the body.
+- Before the closing slide, restate the numbered conclusions or the ask; the
+  closing slide only hands over (one sentence and confirmed contacts).
+- Appendix pages keep conclusion headlines; mark "Appendix" or "Backup" in the
+  eyebrow, not in the headline.
 - Never end with a pile of cases and no conclusion.
 - Use question headlines for research questions, workshop questions, or real
   choices. Never rhetorical questions.
@@ -220,6 +236,7 @@ warning — shrink the box or check the ink position in the render.
 By eye (in the render from `python scripts/render_deck.py out/deck.pptx`):
 
 - [ ] Do the eyebrows alone, and the headlines alone, each give position and logic?
+- [ ] Does each reading line stay within the measure (no full-width paragraphs)?
 - [ ] Does the focus still come first in grayscale?
 - [ ] Does the relationship between two panels match its symbol?
 - [ ] Can each headline number be traced to an exhibit value or calculation?

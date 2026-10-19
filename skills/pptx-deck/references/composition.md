@@ -51,6 +51,66 @@ unnecessary.
    → We validate with one workload in August                       (a story)
 ```
 
+### Decide how the deck will be consumed
+
+Set `meta.mode` before writing headlines.
+
+- **present** — shown and spoken. One-line headlines (about 8–14 words; Korean
+  about 25–40 characters). The presenter carries the reasoning aloud.
+- **read** — sent ahead, left behind, read on screen or paper. The reader
+  controls the pace and the headline carries claim and consequence: up to two
+  lines, one sentence, about 15–25 words, optionally "claim – consequence" after
+  an en dash. If it needs three lines, the page has two messages.
+
+In a read deck that becomes a document page (two or more paragraphs), bold the
+topic sentence of each paragraph instead of adding sub-headings.
+
+### The executive summary is the table of contents of the argument
+
+For any deck with 3+ sections or 10+ content slides, and for every read deck,
+put a `summary` slide right after the cover (before the agenda):
+
+1. One block per section, in deck order, headed with **the same wording as that
+   section's divider** (`section: n` pulls it), with the section's thesis
+   (`subtitle`) and 2–3 supporting points.
+2. One full-width `so_what` band at the bottom that states the ask.
+3. The summary headline is the deck's governing conclusion.
+
+A reader who stops after page 2 has the whole argument; a reader who jumps to a
+section recognises the sentence and knows where they are. It also turns "the
+headlines tell the story" into a check: if a section's thesis does not support
+the summary headline, the section or the headline is wrong. Skip the summary in
+5-slide updates, where the headlines already are the summary.
+
+For long or read decks, add a section tracker (`chrome.tracker` / `meta.tracker`)
+so every page shows where it sits ([layouts.md](layouts.md), fixed frame).
+
+### Numbered overview, then one page per item
+
+When a page lists 3–5 drivers, levers or recommendations, number them, and give
+each later deep-dive page the same number and the same short name — in the
+eyebrow (`02 · Pricing`) and at the start of the headline when it helps. Close
+the run by returning to the overview with the numbers intact, or with the
+summary. The number is a cheap, unambiguous link between overview and detail
+and survives skimming better than colour. Do not number unrelated topics just
+to look orderly.
+
+When one claim needs two exhibits, the headline may continue across the pair
+("… (1/2)", "… (2/2)", Korean "(계속)"); for three or more pages, use `(1/N)` in
+the eyebrow.
+
+### End each chapter with what it means
+
+In read decks and reports with 3+ chapters, close each substantive chapter with
+a small implication page: 2–4 numbered actions or questions for the reader, each
+a verb-first bold phrase plus one line. Build it with
+`cards: {style: open, numbered: true}` (large numerals over each heading, no
+boxes). Where a full page is too much, put the same 2–4 items in a `next_steps`
+band on the chapter's last page. Choose one place per deck — chapter-end pages
+**or** chapter-opening key messages, not both — and keep the label stable
+("What this means", Korean "시사점"). In a short presented deck, one
+recommendations slide before the closing is enough.
+
 ### Vertical logic — no overlaps, no gaps (MECE) within a slide
 
 The items on one slide must **not overlap and must not leave gaps**.
@@ -159,8 +219,10 @@ lines of each slide in `deck.yaml`.
 
 1. Write the objective in one sentence.
 2. Choose three to five supporting arguments with no overlaps and no gaps (MECE).
-3. Write each argument as a slide headline (a conclusion sentence).
-4. **Read only the headlines.** Do they tell the story?
+3. Write each argument as a section thesis, then each slide headline under it
+   (a conclusion sentence).
+4. **Read only the headlines.** Do they tell the story? In a deck with a
+   summary, do the section theses read as the summary's blocks?
 5. Then pick the means of expression for each slide
    ([visuals.md](visuals.md) decision table).
 6. Build the slides last.
@@ -176,6 +238,7 @@ Render with `python scripts/render_deck.py out/deck.pptx` and, separately from
 the defect list, check:
 
 - [ ] **Do the headlines alone tell the story?** (most important)
+- [ ] Does the summary repeat each section's wording, in deck order?
 - [ ] One visual focus per slide?
 - [ ] Any slide with three or more highlights?
 - [ ] Are cards and items in order of importance (leftmost most important)?

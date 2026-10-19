@@ -125,9 +125,17 @@ Ask in one batch:
   multi-slide deck, put dividers at real chapter changes and end with the
   closing slide; all of them count toward the requested length.
 - Agenda only for 8+ content slides or 3+ chapters.
+- **Decide the delivery mode** (`meta.mode`): `present` (shown and spoken,
+  one-line headlines) or `read` (sent ahead or left behind, headlines up to two
+  lines and about 25 words). Ask when it is not clear from the request.
 - **Headlines state the conclusion.** "Architecture overview" ✗ →
   "Requests pass through only three layers" ✓. Topic labels belong only on
-  agenda and section slides.
+  agenda and section slides. A question headline needs its one-sentence answer
+  directly below (`lead_style: band`).
+- Give every section divider a one-sentence thesis (`subtitle`). With 3+
+  sections or 10+ content slides, open with a `summary` built from those
+  theses and close each chapter with what it means; long or read decks also get
+  a section tracker (`meta.tracker`).
 - Read [composition.md](references/composition.md); for proposals, diagnostics
   and strategy, also [analytical-methods.md](references/analytical-methods.md).
 
@@ -141,6 +149,8 @@ catalog order. **Decide the representation first** with
 - readers look *values* up → `table` (≤ 7 rows × 7 columns)
 - boundaries, branches, multi-step connections → `diagram`
 - a few representative numbers → `stats` with a source
+- the whole argument on one page → `summary` (one block per section, the ask in
+  a band at the bottom)
 - defined stages with a current position → `process`; dates → `timeline`
 - nothing fits → `custom` with deckkit primitives, using brand tokens only
 

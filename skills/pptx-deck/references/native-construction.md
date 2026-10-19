@@ -110,12 +110,12 @@ per slide; the reader learns where to look.
 | Element | Token |
 |---|---|
 | Eyebrow / section label | `layout.eyebrow_y`, `type.label`, `colors.accent`, uppercase if `type.eyebrow_uppercase` |
-| Headline | `layout.title_y`, height `layout.title_h`, width = content width, `type.title`, `colors.ink`, weight per `type.heading_bold`; **one line, word wrap on** so an over-long headline wraps visibly instead of running off the slide; the builder and `lint_deck.py` warn when it wraps past one line |
+| Headline | `layout.title_y`, height `layout.title_h`, width = content width, `type.title`, `colors.ink`, weight per `type.heading_bold`; **one line (two in `meta.mode: read`), word wrap on** so an over-long headline wraps visibly instead of running off the slide; the builder and `lint_deck.py` warn when it wraps past `layout.title_lines` |
 | Accent rule | `layout.rule_y`, `layout.rule_w × layout.rule_h`, `colors.accent`; hidden when `rule_y` is null |
 | Body | starts at `layout.body_top`, ends by `layout.body_bottom` |
 | Footer | `layout.footer_y`; optional hairline in `colors.line` at 0.5 pt; footer text and page number in `colors.muted` |
 
-If the headline does not fit on one line at `type.title`, shorten the wording;
+If the headline does not fit its lines at `type.title`, shorten the wording;
 do not shrink the font. The `agenda` layout uses the same band with
 `copy.agenda_eyebrow`. A company template's title placeholder replaces this band
 when `template.use_placeholders` is on.

@@ -51,12 +51,13 @@ machine that renders QA images, or the contact sheet will show substitutes.
 | `hero` | Cover and closing title |
 | `statement` | Statement and quote slides; stat values |
 | `section` | Section divider title and number |
-| `title` | Content headline — must fit one line |
+| `title` | Content headline — must fit `layout.title_lines` lines |
 | `lead` | Full-width reading text: lead, bullets, column headings |
 | `body` | Narrow-column text: cards, table cells, diagram nodes |
 | `caption` | Sources, captions, chart labels, table headers |
 | `label` | Eyebrow, footer, page number |
 | `min` | Hard floor; smaller requests are raised and reported |
+| `max_measure` | Longest line of reading text, in average Latin characters (default 75; a CJK character counts about two). The lead, bullets, subtitles and statement support are drawn no wider than this at their size; `null` turns the cap off |
 | `table_min`, `readable_min` | Optional, read by the design lint only: a lower floor for dense table cells, and the size below which readable (non-footer) text is warned. Both default to `min` |
 | `line_spacing`, `heading_line_spacing` | Paragraph line spacing multiples |
 | `heading_bold` | Default false: size already creates hierarchy |
@@ -93,6 +94,7 @@ different rule in `guidelines.md` if your brand has one.
 | `columns` | Grid for custom renderers: `deckkit.grid_span(canvas, start, span)` returns the x and width of columns on it |
 | `radius` | Panel corner radius (0 = square) |
 | `eyebrow_y`, `title_y`, `title_h` | The fixed headline band |
+| `title_lines` | Headline lines the band reserves (default 1). `title_h`, `rule_y` and `body_top` are given for this many lines; a deck with `meta.mode: read` needs two, and when the brand reserves fewer the builder moves the rule and the body start down by one headline line (`type.title` × 1.2 × `heading_line_spacing`) on every content slide |
 | `rule_y`, `rule_w`, `rule_h` | Accent rule under the headline; `rule_y: null` hides it |
 | `body_top`, `body_bottom` | The body band; content must end above `body_bottom` |
 | `footer_y` | Footer text, page number and logo |
@@ -107,6 +109,12 @@ so the footer reads as outside the content.
 (`footer-right`, `footer-left`, `top-right`), `cover_logo_width`. Use logo files
 as supplied; never recolor or stretch them.
 
+`tracker` (default `none`): `tabs` or `dots` shows the current section on
+content slides inside a section, built from the deck's `section` slides; a deck
+overrides it with `meta.tracker`. Tabs replace the eyebrow; dots sit at the
+right end of the eyebrow band (left of a `top-right` logo). See
+[layouts.md](layouts.md), fixed frame.
+
 ### `backgrounds`
 `cover`, `section`, `closing`, `content`: `{color: <token>, image: <path>}`.
 An image fills the slide (cropped to cover). Text color follows the background:
@@ -116,7 +124,9 @@ area behind the text.
 
 ### `copy`
 `closing_title`, `agenda_eyebrow`, `source_label` (prefix of source lines;
-default "Source", or "출처" in Korean decks), `default_language`.
+default "Source", or "출처" in Korean decks; set `자료` here if that is your
+convention), `next_steps_label` (label of the `next_steps` band; default "What
+this means", or "시사점" in Korean decks), `default_language`.
 
 ### `icons`
 `path`: a folder of icons the organization licenses (PNG preferred; SVG needs
