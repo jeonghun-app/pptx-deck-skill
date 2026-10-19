@@ -11,7 +11,7 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-from . import measure
+from . import exhibits, measure
 from .canvas import Canvas
 
 LAYOUTS = {}
@@ -82,19 +82,68 @@ def headline(c: Canvas, spec: dict, ctx) -> float:
 
 
 def source_line(c: Canvas, spec: dict) -> float:
-    """Draw the source / footnote line at the bottom of the body. Returns its top."""
+    """Draw the exhibit footer at the bottom of the body. Returns its top.
+
+    ``source`` is a string (one line) or an object with ``notes``, ``question``,
+    ``base``, ``n``, ``as_of``, ``rounding`` and ``text``. The block grows upward,
+    so the body limit shrinks while the headline stays where it is.
+    """
     b = c.brand
     bottom = float(b["layout.body_bottom"])
     src = spec.get("source")
-    if not src:
+    language = getattr(c, "language", "en")
+    extra = exhibits.auto_notes(spec, b, language)
+    if not src and not extra:
         return bottom
+    if isinstance(src, dict) or extra:
+        paras = exhibits.footer_paragraphs(src, b, language, extra)
+        h = max(c.size("caption") * 1.5, c.text_height(paras, "caption", b.content_width))
+        top = bottom - h
+        c.text(b.content_left, top, b.content_width, h, paras, size="caption", color="muted",
+               anchor="bottom", name="Source")
+        return top - float(b["layout.gutter"]) / 2
     h = c.size("caption") * 1.5
     top = bottom - h
-    label = b.get("copy.source_label") or ("출처" if getattr(c, "language", "en") == "ko" else "Source")
-    text = src if str(src).lower().startswith((label.lower(), "source", "note", "출처", "주:")) else f"{label}: {src}"
-    c.text(b.content_left, top, b.content_width, h, text, size="caption", color="muted",
-           anchor="bottom", name="Source")
+    c.text(b.content_left, top, b.content_width, h, exhibits.source_text(b, language, src),
+           size="caption", color="muted", anchor="bottom", name="Source")
     return top - float(b["layout.gutter"]) / 2
+
+
+def commentary_column(c: Canvas, spec: dict, y: float, limit: float):
+    """Draw the side commentary of an exhibit and return the (x, w) left for it.
+
+    ``commentary: {text | bullets, side: right | left, width: 3 | 4}`` takes that
+    many grid columns; ``takeaway: "..."`` is the same as right, 4 columns. Text
+    follows the width rule: ``type.lead`` at 4 columns, ``type.body`` at 3.
+    """
+    b = c.brand
+    note = spec.get("commentary")
+    if note is None and spec.get("takeaway"):
+        note = {"text": spec["takeaway"]}
+    if not note:
+        return b.content_left, b.content_width
+    if isinstance(note, str):
+        note = {"text": note}
+    n = int(b.get("layout.columns", 12))
+    span = int(note.get("width", 4))
+    if note.get("side", "right") == "left":
+        (tx, tw), (x, w) = grid_span(c, 0, span), grid_span(c, span, n - span)
+    else:
+        (x, w), (tx, tw) = grid_span(c, 0, n - span), grid_span(c, n - span, span)
+    size = "lead" if span >= 4 else "body"
+    inner = tw - 12
+    end = y
+    if note.get("text"):
+        th = c.text_height(note["text"], size, inner)
+        c.text(tx + 12, y, inner, th, note["text"], size=size, color=c.ink, bold_color="accent",
+               name="Commentary")
+        end = y + th
+    if note.get("bullets"):
+        start = end + (c.size(size) * 0.6 if end > y else 0)
+        end = draw_bullets(c, tx + 12, start, inner, note["bullets"], size=size)
+    c.box(tx, y, 2, end - y, fill="accent", radius=0, name="Commentary rule")
+    check_bottom(c, end, limit)
+    return x, w
 
 
 def check_bottom(c: Canvas, y_end: float, limit: float):
@@ -397,8 +446,9 @@ def table(c: Canvas, spec, ctx):
     cols = spec.get("columns", [])
     if len(rows) > 7 or len(cols) > 7:
         c.warn(f"table is {len(rows)}x{len(cols)}; keep within 7 rows and 7 columns or split it")
+    x, w = commentary_column(c, spec, y, limit)
     y += 4 if spec.get("highlight_col") is not None else 0
-    _, h = c.table(b.content_left, y, b.content_width, cols, rows, widths=spec.get("widths"),
+    _, h = c.table(x, y, w, cols, rows, widths=spec.get("widths"),
                    numeric_cols=tuple(spec.get("numeric_cols", ())),
                    highlight_col=spec.get("highlight_col"), total_row=bool(spec.get("total_row")),
                    size="body", name="Table")
@@ -411,22 +461,114 @@ def chart(c: Canvas, spec, ctx):
     y = headline(c, spec, ctx)
     limit = source_line(c, spec)
     ch = spec.get("chart", {})
-    takeaway = spec.get("takeaway")
-    x, w = b.content_left, b.content_width
-    if takeaway:  # chart on the left two thirds, the reading on the right
-        cols = columns(c, 3)
-        x, w = cols[0][0], cols[1][0] + cols[1][1] - cols[0][0]
-        tx, tw = cols[2]
-        th = c.text_height(takeaway, "lead", tw)
-        c.box(tx, y, 2, th, fill="accent", radius=0)
-        c.text(tx + 12, y, tw - 12, th, takeaway, size="lead", color=c.ink, bold_color="accent")
+    x, w = commentary_column(c, spec, y, limit)
+    if ch.get("panels"):
+        chart_panels(c, x, y, w, limit - y, ch)
+        return
     if ch.get("unit"):
         c.text(x, y, w, b["type.caption"] * 1.5, ch["unit"], size="caption", color="muted")
         y += b["type.caption"] * 1.8
-    c.chart(x, y, w, limit - y, ch.get("type", "column"), ch.get("categories", []),
-            ch.get("series", []), highlight=ch.get("highlight"),
-            number_format=ch.get("number_format"), labels=ch.get("labels", True),
-            legend=ch.get("legend"), name="Chart")
+    draw_chart(c, x, y, w, limit - y, ch, name="Chart")
+
+
+def draw_chart(c: Canvas, x, y, w, h, ch: dict, name="Chart", **shared):
+    """One native chart from a chart spec (also used for each panel)."""
+    if ch.get("type") == "waterfall":
+        return c.waterfall(x, y, w, h, ch, number_format=ch.get("number_format"), name=name, **shared)
+    return c.chart(x, y, w, h, ch.get("type", "column"), ch.get("categories", []),
+                   ch.get("series", []), highlight=ch.get("highlight"),
+                   number_format=ch.get("number_format"), labels=ch.get("labels"),
+                   legend=ch.get("legend"), name=name, highlight_series=ch.get("highlight_series"),
+                   series_kind=ch.get("series_kind"), end_labels=ch.get("end_labels"),
+                   estimates=ch.get("estimates"), annotations=ch.get("annotations"),
+                   vmin=ch.get("min"), vmax=ch.get("max"), **shared)
+
+
+def chart_panels(c: Canvas, x, y, w, h, ch: dict):
+    """2-4 charts in one row: a shared header line (bold metric over its unit),
+    one plot rectangle and baseline for all, and one value range when the panels
+    share a unit (``shared_scale`` overrides). At most one key, drawn once."""
+    b = c.brand
+    panels = ch["panels"]
+    if not 2 <= len(panels) <= 4:
+        c.warn(f"{len(panels)} chart panels; use 2–4 in one row")
+    cols = columns(c, max(1, len(panels)), x=x, w=w)
+    head = 0.0
+    for (px, pw), p in zip(cols, panels):
+        hh = c.text_height(p.get("title", ""), "body", pw) if p.get("title") else 0
+        hh += c.text_height(p["unit"], "caption", pw) if p.get("unit") else 0
+        head = max(head, hh)
+    for (px, pw), p in zip(cols, panels):
+        yy = y
+        if p.get("title"):
+            th = c.text_height(p["title"], "body", pw)
+            c.text(px, yy, pw, th, p["title"], size="body", color=c.ink, bold=True, name="Panel title")
+            yy += th
+        if p.get("unit"):
+            c.text(px, yy, pw, c.text_height(p["unit"], "caption", pw), p["unit"], size="caption",
+                   color="muted", name="Panel unit")
+    top = y + head + (float(b["layout.gutter"]) / 2 if head else 0)
+    multi = [p for p in panels if len(p.get("series", [])) > 1 and p.get("type") != "waterfall"]
+    key = bool(multi) and not all(p.get("type") == "line" for p in multi)
+    if key:  # one shared key instead of a legend per panel
+        top = _panel_key(c, x, top, w, multi[0])
+    units = {str(p.get("unit")) for p in panels}
+    shared = ch.get("shared_scale", len(units) == 1)
+    if shared and len({_orientation(p) for p in panels}) > 1:
+        shared = False
+    height = y + h - top
+    specs = [dict(p, legend=False) for p in panels]
+    # A shared scale needs one plot rectangle for all panels; different units need
+    # only the shared baseline, so then just the top and bottom padding are merged.
+    plans = [_plan(c, pw, height, p, None) for (_, pw), p in zip(cols, specs)]
+    ranges = [(pl.lo, pl.hi, pl.step) for pl in plans]
+    if shared:
+        lo, hi, step = exhibits.axis_range(min(r[0] for r in ranges), max(r[1] for r in ranges))
+        ranges = [(lo, hi, step)] * len(panels)
+    pads = [[0.0] * 4 for _ in panels]
+    for _ in range(2):  # lanes depend on the padding and the padding on the lanes: two passes settle
+        plans = [_plan(c, pw, height, p, pad, r) for (_, pw), p, pad, r in zip(cols, specs, pads, ranges)]
+        merged = [max(pl.pads[k] for pl in plans) for k in range(4)]
+        pads = [merged if shared else [pl.pads[0], merged[1], pl.pads[2], merged[3]] for pl in plans]
+    for i, ((px, pw), p) in enumerate(zip(cols, specs)):
+        draw_chart(c, px, top, pw, height, p, name=f"Chart panel {i + 1}", value_range=ranges[i],
+                   min_pads=pads[i])
+
+
+def _orientation(p):
+    return "h" if p.get("type") in exhibits.HORIZONTAL else "v"
+
+
+def _plan(c: Canvas, w, h, p, pads, value_range=None):
+    """The plot plan a panel would get on its own, for merging across panels."""
+    kind = p.get("type", "column")
+    fmt = p.get("number_format")
+    if kind == "waterfall":
+        cats, _, series = exhibits.waterfall_series(p)
+        return exhibits.plan_chart(c, kind, w, h, cats, series, labels=True, number_format=fmt,
+                                   value_range=value_range, min_pads=pads)
+    series = p.get("series", [])
+    labels, end = exhibits.label_modes(kind, len(series), p.get("labels"), p.get("end_labels"))
+    texts = [t for _, _, t in exhibits.end_texts(series, labels, fmt)] if end else []
+    return exhibits.plan_chart(c, kind, w, h, p.get("categories", []), series, labels=labels,
+                               number_format=fmt, end_texts=texts, annotations=p.get("annotations") or [],
+                               vmin=p.get("min"), vmax=p.get("max"), value_range=value_range,
+                               min_pads=pads)
+
+
+def _panel_key(c: Canvas, x, y, w, p) -> float:
+    """Swatch + name for each series, in one row; returns the y below it."""
+    colors = exhibits.series_colors(c.brand, p.get("type", "column"), len(p["series"]),
+                                    p.get("series_kind"), p.get("highlight_series"))
+    cap = c.size("caption")
+    xx = x
+    for s, color in zip(p["series"], colors):
+        c.box(xx, y + cap * 0.35, cap * 0.8, cap * 0.8, fill=color, radius=0, name="Key swatch")
+        tw = measure.text_width(str(s["name"]), cap) + 6
+        c.text(xx + cap * 1.2, y, tw, cap * 1.5, str(s["name"]), size="caption", color=c.muted,
+               wrap=False, check_fit=False, name="Key")
+        xx += cap * 1.2 + tw + float(c.brand["layout.gutter"])
+    return y + cap * 1.5 + float(c.brand["layout.gutter"]) / 2
 
 
 @layout("process")
@@ -501,11 +643,11 @@ def diagram(c: Canvas, spec, ctx):
         ch = c.text_height(caption, "body", b.content_width)
         c.text(b.content_left, limit - ch, b.content_width, ch, caption, size="body", color=c.muted)
         limit -= ch + b["layout.gutter"]
+    x0, w0 = commentary_column(c, spec, y, limit)
     grid = spec.get("grid", {})
     nodes = spec.get("nodes", [])
     n_cols = int(grid.get("cols") or max((n.get("col", 0) + n.get("colspan", 1) for n in nodes), default=1))
     n_rows = int(grid.get("rows") or max((n.get("row", 0) + n.get("rowspan", 1) for n in nodes), default=1))
-    x0, w0 = b.content_left, b.content_width
     node_h_max = float(grid.get("node_height", 58))
     # rows never grow beyond what a node and its labels need; spare space stays below
     cell_w = w0 / n_cols
@@ -637,7 +779,8 @@ def image(c: Canvas, spec, ctx):
         limit -= ch + 8
     if not spec.get("alt"):
         c.warn("image without alt text")
-    c.image(path, b.content_left, y, b.content_width, limit - y, fit=spec.get("fit", "contain"),
+    x, w = commentary_column(c, spec, y, limit)
+    c.image(path, x, y, w, limit - y, fit=spec.get("fit", "contain"),
             alt=spec.get("alt", ""), name="Image")
 
 

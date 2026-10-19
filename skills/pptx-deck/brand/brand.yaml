@@ -72,8 +72,11 @@ colors:
   positive: 1A7F4B
   warning: 9A5B00
   negative: B3261E
-  # Chart series, in order. The first is the highlight series.
+  # Chart series for nominal data (categories with no order), in order.
   series: [2F5BD3, 7A8699, 0F8A7E, B7791F, 8E4EC6]
+  # How ordered series (stacks, several series on one chart) are colored:
+  # ramp = tints of `accent` from dark to light; palette = `series` above.
+  series_mode: ramp
 
 # Layout grid and the fixed vertical band of every content slide.
 layout:
@@ -91,6 +94,13 @@ layout:
   body_top: 112
   body_bottom: 466      # content must end here; the band below belongs to the footer
   footer_y: 506
+
+# Chart styling derived from the colors above. Tints mix a color toward white
+# (0 = the color itself, 1 = white).
+chart:
+  ramp_light: 0.7               # lightest accent tint in an ordered series ramp
+  context_tints: [0.45, 0.75]   # grey tints of `muted` for context next to a highlight
+  estimate_tint: 0.55           # estimated bars: tint of their actual color, outlined in it
 
 chrome:
   footer_text: ""                 # e.g. "© 2026 Example Corp. Confidential"
@@ -116,6 +126,19 @@ copy:
   agenda_eyebrow: AGENDA
   source_label: null    # prefix of source lines; null = "Source" (or "출처" when meta.language is ko)
   default_language: en
+  # Wording of exhibit footers and computed annotations; null = built-in English
+  # or Korean text by meta.language. `{}` is where the value goes.
+  exhibit_labels:
+    question: null        # "Q: {}"
+    base: null            # "Base: {}"
+    n: null               # "n = {}"
+    as_of: null           # "As of {}"
+    rounding: null        # caveat added by source.rounding
+    estimate_from: null   # "Values from {} on are estimates."
+    estimate_suffix: null # "{} = estimate."
+    estimate_series: null # name of a line's estimated part in the chart data, "{} (estimate)"
+    pp: null              # percentage-point unit of a delta ("pp"; "%p" in Korean)
+    x: null               # multiple unit of a delta ("x"; "배" in Korean)
 
 # Icon library: a folder of SVG/PNG files your organization is allowed to use.
 # Search it with `scripts/find_icon.py <keyword>`.
