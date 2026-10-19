@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.0.0 — 2026-10-19
+
+First stable release. It contains the features of 0.2.0 with no functional
+changes. From this version on, the public interface follows semantic
+versioning:
+
+- the deck spec (`deck.yaml`): layouts, their keys and the `meta` options;
+- the brand profile (`brand.yaml`) tokens and their defaults;
+- the command-line scripts and their flags (`build_deck.py`, `lint_deck.py`,
+  `render_deck.py`, `extract_brand.py`, `find_icon.py`, and the layout-audit
+  scripts);
+- the `deckkit` primitives used by custom renderers.
+
+A change that breaks any of these needs a new major version; new layouts,
+keys and tokens with defaults arrive in minor versions.
+
 ## 0.2.0 — 2026-10-19
 
 Construction craft for analytical and decision decks: exhibits that carry

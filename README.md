@@ -1,6 +1,6 @@
 # pptx-deck-skill
 
-[한국어](README.ko.md) · **Version 0.2.0** · [Changelog](CHANGELOG.md) · [Releases](https://github.com/jeonghun-app/pptx-deck-skill/releases)
+[한국어](README.ko.md) · **Version 1.0.0** · [Changelog](CHANGELOG.md) · [Releases](https://github.com/jeonghun-app/pptx-deck-skill/releases)
 
 Agent skills that turn a presentation story into a **native, editable
 PowerPoint file in your organization's own design**. The model plans the story;
@@ -16,7 +16,10 @@ your brand profile decides every color, font, position and slide pattern.
 
 See [Examples](#examples) for the slides at full size and the PPTX files.
 
-## What's new in 0.2
+## What's new in 1.0
+
+1.0.0 is the first stable release: the deck spec, brand tokens, scripts and
+`deckkit` primitives now follow semantic versioning. Since 0.1:
 
 - **Exhibits that carry their own point.** Structured footers (notes, question,
   base, n, date, source), highlights in one accent with grey context, line end
@@ -33,7 +36,7 @@ See [Examples](#examples) for the slides at full size and the PPTX files.
   in, so wrap and overflow warnings match the slides.
 - **Korean conventions.** Noun-phrase headlines, `%p`, unit and source labels.
 
-Upgrading from 0.1: existing deck specs and brand files build without
+Upgrading from 0.1 or 0.2: existing deck specs and brand files build without
 changes. A few defaults changed visibly (line end labels, a reading-width cap,
 accent tints for several series on the default palette); each has an opt-out
 listed in the [changelog](CHANGELOG.md).
