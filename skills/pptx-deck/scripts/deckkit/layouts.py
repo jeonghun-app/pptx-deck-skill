@@ -311,47 +311,67 @@ def cards(c: Canvas, spec, ctx):
     limit = source_line(c, spec)
     items = spec.get("cards", [])
     n = len(items)
-    if n > 4:
-        c.warn(f"{n} cards in one row; use at most 4 or a table")
+    is_open = spec.get("style", "filled") == "open"
+    if n > (5 if is_open else 4):
+        c.warn(f"{n} cards in one row; use at most {5 if is_open else 4}"
+               f"{'' if is_open else ' (5 with style: open)'} or a table")
     cols = columns(c, max(1, n))
     highlight = spec.get("highlight")
+    numbered = bool(spec.get("numbered"))
     pad = 14.0
+    inset = 0.0 if is_open else pad  # open columns align their text with the column edge
     icon = 22.0
+    num_pt = c.size("statement")
+    num_h = num_pt * 1.2 + 8
     heights = []
     for (x, w), item in zip(cols, items):
-        hh = pad * 2
+        iw = w - 2 * inset
+        hh = pad + (0 if is_open else pad)
+        if numbered:
+            hh += num_h
         if item.get("icon"):
             hh += icon + 10
         if item.get("heading"):
-            hh += c.text_height(item["heading"], "lead", w - 2 * pad) + 6
+            hh += c.text_height(item["heading"], "lead", iw) + 6
         if item.get("body"):
-            hh += c.text_height(item["body"], "body", w - 2 * pad)
+            hh += c.text_height(item["body"], "body", iw)
         if item.get("bullets"):
             for t, _ in bullet_items(item["bullets"]):
-                hh += c.text_height(t, "body", w - 2 * pad - c.size("body") * 1.1) + c.size("body") * 0.5
+                hh += c.text_height(t, "body", iw - c.size("body") * 1.1) + c.size("body") * 0.5
         heights.append(hh)
     card_h = max(heights or [0])
     for i, ((x, w), item) in enumerate(zip(cols, items)):
         active = highlight == i
-        c.box(x, y, w, card_h, fill="surface_alt" if not active else c.brand.tint("accent", 0.92),
-              line="accent" if active else None, line_width=1.0, name=f"Card {i + 1}")
+        if is_open:  # no fill: a hairline over each column, the accent one marks the highlight
+            if active:
+                c.box(x, y - 1, w, 2, fill="accent", radius=0, name=f"Card {i + 1}")
+            else:
+                c.line(x, y, x + w, y, color="line", width=0.75, name=f"Card {i + 1}")
+        else:
+            c.box(x, y, w, card_h, fill="surface_alt" if not active else c.brand.tint("accent", 0.92),
+                  line="accent" if active else None, line_width=1.0, name=f"Card {i + 1}")
+        cx, cw = x + inset, w - 2 * inset
         cy = y + pad
+        if numbered:
+            c.text(cx, cy, cw, num_pt * 1.15, f"{i + 1:02}", size="statement", font="heading",
+                   color="accent", check_fit=False, name=f"Card {i + 1} number")
+            cy += num_h
         if item.get("icon"):
             path = ctx.icon(item["icon"], c)
             if path:
-                c.image(path, x + pad, cy, icon, icon)
+                c.image(path, cx, cy, icon, icon)
             cy += icon + 10
         if item.get("heading"):
-            h = c.text_height(item["heading"], "lead", w - 2 * pad)
-            c.text(x + pad, cy, w - 2 * pad, h, item["heading"], size="lead", color=c.ink)
+            h = c.text_height(item["heading"], "lead", cw)
+            c.text(cx, cy, cw, h, item["heading"], size="lead", color=c.ink)
             cy += h + 6
         if item.get("body"):
-            h = c.text_height(item["body"], "body", w - 2 * pad)
-            c.text(x + pad, cy, w - 2 * pad, h, item["body"], size="body", color=c.body_color,
+            h = c.text_height(item["body"], "body", cw)
+            c.text(cx, cy, cw, h, item["body"], size="body", color=c.body_color,
                    bold_color=c.ink)
             cy += h
         if item.get("bullets"):
-            draw_bullets(c, x + pad, cy, w - 2 * pad, item["bullets"], size="body")
+            draw_bullets(c, cx, cy, cw, item["bullets"], size="body")
     check_bottom(c, y + card_h, limit)
 
 
@@ -364,6 +384,9 @@ def stats(c: Canvas, spec, ctx):
     if not spec.get("source"):
         c.warn("stats slide without a source line")
     highlight = spec.get("highlight")
+    if len(items) > 4:
+        check_bottom(c, _stat_grid(c, items, highlight, y), limit)
+        return
     value_size = b["type.statement"]
     end = y
     for i, ((x, w), item) in enumerate(zip(columns(c, max(1, len(items))), items)):
@@ -388,6 +411,58 @@ def stats(c: Canvas, spec, ctx):
     check_bottom(c, end, limit)
 
 
+def _stat_grid(c: Canvas, items, highlight, y) -> float:
+    """5-9 stats as a 3-column grid (3x2, 3x3) separated by hairlines, no boxes.
+
+    Values are about three times the label size so the eye scans the numbers first."""
+    b = c.brand
+    if len(items) > 9:
+        c.warn(f"{len(items)} stats; keep at most 9 or move the rest to a table")
+    value_pt = c.size("statement" if len(items) <= 6 else "section")
+    cols = columns(c, 3)
+    gutter = float(b["layout.gutter"])
+    pad = 12.0
+    vh = value_pt * 1.25
+    rows = [items[i:i + 3] for i in range(0, len(items), 3)]
+    heights = []
+    for row in rows:
+        need = 0.0
+        for (x, w), item in zip(cols, row):
+            hh = vh + 4
+            if item.get("label"):
+                hh += c.text_height(item["label"], "body", w) + 2
+            if item.get("detail"):
+                hh += c.text_height(item["detail"], "body", w)
+            need = max(need, hh)
+        heights.append(need + 2 * pad)
+    top = y
+    for r, (row, h) in enumerate(zip(rows, heights)):
+        if r:
+            c.line(b.content_left, top, b.content_right, top, color="line", width=0.75)
+        for j, ((x, w), item) in enumerate(zip(cols, row)):
+            i = r * 3 + j
+            yy = top + (pad if r else 0)
+            value = str(item.get("value", ""))
+            color = "accent" if (highlight is None or highlight == i) else c.ink
+            c.text(x, yy, w, vh, value, size=value_pt, font="heading", color=color,
+                   name=f"Stat {i + 1}", check_fit=False)
+            if measure.text_width(value, value_pt) > w:
+                c.warn(f"stat value '{value}' is wider than its column")
+            yy += vh + 4
+            if item.get("label"):
+                lh = c.text_height(item["label"], "body", w)
+                c.text(x, yy, w, lh, item["label"], size="body", color=c.ink)
+                yy += lh + 2
+            if item.get("detail"):
+                dh = c.text_height(item["detail"], "body", w)
+                c.text(x, yy, w, dh, item["detail"], size="body", color=c.muted)
+        top += h - (0 if r else pad)
+    end = top - pad
+    for (x, w) in cols[1:]:  # vertical hairlines in the gutters
+        c.line(x - gutter / 2, y, x - gutter / 2, end, color="line", width=0.75)
+    return end
+
+
 @layout("table")
 def table(c: Canvas, spec, ctx):
     b = c.brand
@@ -398,11 +473,30 @@ def table(c: Canvas, spec, ctx):
     if len(rows) > 7 or len(cols) > 7:
         c.warn(f"table is {len(rows)}x{len(cols)}; keep within 7 rows and 7 columns or split it")
     y += 4 if spec.get("highlight_col") is not None else 0
+    family = spec.get("symbols")
+    labels = None
+    if family:
+        from .frameworks import SYMBOLS, symbol_labels
+        if family not in SYMBOLS:
+            c.warn(f"unknown symbols '{family}' (use {', '.join(SYMBOLS)})", "ERROR")
+            family = None
+        else:
+            legend = spec.get("legend", "auto")
+            labels = symbol_labels(c, family, legend if isinstance(legend, dict) else None)
+    elif any(isinstance(cell, dict) for row in rows for cell in row):
+        c.warn("table has {s: ...} cells but no 'symbols' family (harvey, check, rag, tier)", "ERROR")
     _, h = c.table(b.content_left, y, b.content_width, cols, rows, widths=spec.get("widths"),
                    numeric_cols=tuple(spec.get("numeric_cols", ())),
                    highlight_col=spec.get("highlight_col"), total_row=bool(spec.get("total_row")),
-                   size="body", name="Table")
-    check_bottom(c, y + h, limit)
+                   size="body", name="Table", symbols=family, symbol_labels=labels)
+    y += h
+    if family and spec.get("legend", "auto") is not False:  # symbols are read through the legend
+        from .frameworks import normalize_symbol, symbol_legend
+        used = {normalize_symbol(family, cell.get("s")) for row in rows for cell in row
+                if isinstance(cell, dict) and "s" in cell}
+        y += 8
+        y += symbol_legend(c, b.content_left, y, b.content_width, family, labels, used)
+    check_bottom(c, y, limit)
 
 
 @layout("chart")
@@ -434,17 +528,38 @@ def process(c: Canvas, spec, ctx):
     b = c.brand
     y = headline(c, spec, ctx)
     limit = source_line(c, spec)
-    steps = spec.get("steps", [])
+    steps = [s if isinstance(s, dict) else {"title": str(s)} for s in spec.get("steps", [])]
     current = spec.get("current")
+    rows = spec.get("rows") or []
+    x0, w0 = b.content_left, b.content_width
+    if rows:  # the attribute labels take a left column; steps align over the cells
+        _, label_w = grid_span(c, 0, 2)
+        x0 += label_w + float(b["layout.gutter"])
+        w0 -= label_w + float(b["layout.gutter"])
+    if spec.get("style", "rail") == "chevron":
+        if len(steps) > 6:
+            c.warn(f"{len(steps)} chevrons; keep at most 6 or group the steps")
+        end, cols, bands = _chevrons(c, steps, current, x0, w0, y)
+    else:
+        end, cols = _rail(c, steps, current, x0, w0, y)
+        bands = [(x - 6, w + 12) for x, w in cols]
+    if rows:
+        end = _step_rows(c, rows, cols, bands, current, end + float(b["layout.gutter"]))
+    check_bottom(c, end, limit)
+
+
+def _rail(c: Canvas, steps, current, x0, w0, y):
+    """Default style: accent rule over each step, numbered, arrows between the rules."""
+    b = c.brand
     gap = float(b["layout.gutter"]) * 2
-    cols = columns(c, max(1, len(steps)), gap=gap)
+    cols = columns(c, max(1, len(steps)), x=x0, w=w0, gap=gap)
     end = y
     for i, ((x, w), step) in enumerate(zip(cols, steps)):
-        step = step if isinstance(step, dict) else {"title": str(step)}
         active = current is None or current == i
         c.box(x, y, w, 3, fill="accent" if active else "line", radius=0)
         yy = y + 14
-        c.text(x, yy, w, b["type.label"] * 1.5, f"{i + 1:02}", size="label", font="mono",
+        number = f"{i + 1:02}" + (f"  ·  {step['period']}" if step.get("period") else "")
+        c.text(x, yy, w, b["type.label"] * 1.5, number, size="label", font="mono",
                color="accent" if active else "muted")
         yy += b["type.label"] * 1.5 + 6
         h = c.text_height(step.get("title", ""), "lead", w)
@@ -458,7 +573,82 @@ def process(c: Canvas, spec, ctx):
             ax = x + w + gap * 0.25
             c.line(ax, y + 1.5, ax + gap * 0.5, y + 1.5, color="muted", width=1.0, arrow="end")
         end = max(end, yy)
-    check_bottom(c, end, limit)
+    return end, cols
+
+
+def _chevrons(c: Canvas, steps, current, x0, w0, y):
+    """Chevron header: one native chevron per step (the first a pentagon), period above.
+
+    Returns the bottom and the (x, w) text column under each chevron, so rows align."""
+    from .frameworks import copy_text
+    b = c.brand
+    n = max(1, len(steps))
+    h = c.size("body") * 2.6
+    depth, gap = h * 0.32, 3.0
+    cw = (w0 - (depth - gap)) / n
+    label_h = b["type.label"] * 1.6
+    has_top = current is not None or any(s.get("period") for s in steps)
+    top = y + (label_h + 4 if has_top else 0)
+    now = copy_text(c, "current_label")
+    cols, bands, end = [], [], top + h
+    for i, step in enumerate(steps):
+        active = current == i
+        sx = x0 + i * cw
+        left = depth + 6 if i else 10.0
+        shp = c.box(sx, top, cw + depth - gap, h, shape="chevron" if i else "pentagon", radius=0,
+                    fill="accent" if active else "surface_alt", name=f"Chevron {i + 1}")
+        shp.adjustments[0] = depth / h
+        tx, tw = sx + left, cw - left - 4
+        title = str(step.get("title", ""))
+        if measure.text_width(title, c.size("body")) > tw:
+            c.warn(f"chevron title '{title}' wraps; use one or two words")
+        c.text(tx, top, tw, h, title, size="body", bold=True, anchor="middle", check_fit=False,
+               color="on_accent" if active else (c.ink if current is None else c.muted),
+               name=f"Chevron {i + 1} title")
+        mark = " · ".join(str(v) for v in (step.get("period"), now if active else None) if v)
+        if mark:
+            c.text(tx, y, tw, label_h, mark, size="label", font="mono",
+                   color="accent" if active else c.muted, name=f"Period {i + 1}")
+        col_w = cw + depth - 12 - left
+        yy = top + h
+        if step.get("body"):
+            bh = c.text_height(step["body"], "body", col_w)
+            c.text(tx, yy + 10, col_w, bh, step["body"], size="body",
+                   color=c.body_color if current is None or active else c.muted)
+            yy += 10 + bh
+        cols.append((tx, col_w))
+        bands.append((sx, cw - gap))
+        end = max(end, yy)
+    return end, cols, bands
+
+
+def _step_rows(c: Canvas, rows, cols, bands, current, y):
+    """Phase x attribute grid: a label column, then one cell under each step. Hairlines only.
+
+    ``bands`` are the (x, w) extents of each step's shape; the current one is tinted."""
+    b = c.brand
+    lx, lw = grid_span(c, 0, 2)
+    pad = 8.0
+    heights = []
+    for row in rows:
+        cells = list(row.get("cells", []))
+        need = c.text_height(str(row.get("label", "")), "body", lw)
+        for (x, w), cell in zip(cols, cells):
+            need = max(need, c.text_height(str(cell), "body", w))
+        heights.append(need + 2 * pad)
+    if isinstance(current, int) and 0 <= current < len(bands):  # tint the current column first
+        x, w = bands[current]
+        c.box(x, y, w, sum(heights), fill=b.tint("accent", 0.93), radius=0, name="Current column")
+    for row, h in zip(rows, heights):
+        c.line(lx, y, b.content_right, y, color="line", width=0.5)
+        c.text(lx, y + pad, lw, h - 2 * pad, str(row.get("label", "")), size="body", bold=True,
+               color=c.ink, check_fit=False, name="Row label")
+        for (x, w), cell in zip(cols, row.get("cells", [])):
+            c.text(x, y + pad, w, h - 2 * pad, str(cell), size="body", color=c.body_color,
+                   bold_color=c.ink, check_fit=False)
+        y += h
+    c.line(lx, y, b.content_right, y, color="line", width=0.5)
+    return y
 
 
 @layout("timeline")

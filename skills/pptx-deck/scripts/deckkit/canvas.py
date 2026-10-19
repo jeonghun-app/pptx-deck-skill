@@ -349,12 +349,16 @@ class Canvas:
 
     # -- table --------------------------------------------------------------
     def table(self, x, y, w, columns, rows, *, widths=None, numeric_cols=(), highlight_col=None,
-              total_row=False, size="body", row_h=None, name=None):
+              total_row=False, size="body", row_h=None, name=None, symbols=None, symbol_labels=None):
         """Quiet native table: thin horizontal rules, no vertical lines.
 
         A cell may be a string or ``[keyword, detail]`` (bold keyword over a
-        muted detail line).
+        muted detail line). With ``symbols`` (``harvey``, ``check``, ``rag``,
+        ``tier``) a cell may also be ``{s: value, label: text}``: a native symbol
+        centred in the cell, or left of its label. ``symbol_labels`` maps values
+        to the words used when a status cell has no label of its own.
         """
+        from .frameworks import draw_symbol, normalize_symbol, symbol_size
         n_cols = len(columns)
         widths = widths or [1] * n_cols
         total = float(sum(widths))
@@ -362,10 +366,30 @@ class Canvas:
         pt = self.size(size)
         detail_pt = self.size("caption")
         pad = 5.0
+        sym_d = symbol_size(self, size) if symbols else 0.0
+        sym_cols = {c for row in rows for c, cell in enumerate(row) if isinstance(cell, dict) and "s" in cell}
+
+        def symbol_cell(cell):
+            """(value, label) of a symbol cell; status cells always carry a word."""
+            value = normalize_symbol(symbols, cell.get("s"))
+            if value is None:
+                self.warn(f"'{cell.get('s')}' is not a {symbols} symbol value", "ERROR")
+            label = cell.get("label")
+            if label is None and symbols == "rag":
+                label = (symbol_labels or {}).get(value, "")
+            return value, str(label or "")
+
+        parsed = {}
         heights = [pt * 1.8 + 2 * pad]
-        for row in rows:
+        for r, row in enumerate(rows, start=1):
             hmax = 0.0
-            for cell, cw in zip(row, col_w):
+            for c, (cell, cw) in enumerate(zip(row, col_w)):
+                if symbols and isinstance(cell, dict) and "s" in cell:
+                    parsed[r, c] = symbol_cell(cell)
+                    label = parsed[r, c][1]
+                    hh = max(sym_d, self.text_height(label, pt, cw - 2 * pad - sym_d - 6) if label else 0)
+                    hmax = max(hmax, hh)
+                    continue
                 head, detail = (cell + [""])[:2] if isinstance(cell, list) else (cell, "")
                 hh = self.text_height(str(head), pt, cw - 2 * pad)
                 if detail:
@@ -389,6 +413,7 @@ class Canvas:
             tbl.rows[r].height = Pt(hh)
         tint = self.brand.tint("accent", 0.93)
         last = len(rows)
+        glyphs = []
         for r in range(last + 1):
             for c in range(n_cols):
                 cell = tbl.cell(r, c)
@@ -402,19 +427,36 @@ class Canvas:
                 else:
                     cell.fill.background()
                 value = columns[c] if r == 0 else rows[r - 1][c] if c < len(rows[r - 1]) else ""
+                if symbols and r > 0 and isinstance(value, dict) and "s" in value:
+                    sym, label = parsed[r, c]
+                    cx0 = x + sum(col_w[:c])
+                    first_line = pt * 1.2 * float(self.brand.get("type.line_spacing", 1.2))
+                    line_mid = y + sum(heights[:r]) + pad + first_line / 2
+                    if label:  # the symbol leads, the word follows it
+                        cell.margin_left = Pt(pad + sym_d + 6)
+                        glyphs.append((sym, cx0 + pad + sym_d / 2, line_mid))
+                    else:
+                        glyphs.append((sym, cx0 + col_w[c] / 2, line_mid))
+                    value = label
                 head, detail = (value + [""])[:2] if isinstance(value, list) else (value, "")
                 tf = cell.text_frame
                 tf.word_wrap = True
                 p = tf.paragraphs[0]
                 p.alignment = PP_ALIGN.RIGHT if c in numeric_cols else PP_ALIGN.LEFT
-                run = p.add_run()
-                run.text = str(head)
-                if r == 0:
-                    self._font(run, "body", self.size("caption"),
-                               "accent" if highlighted else "muted", highlighted)
-                else:
-                    strong = bool(detail) and c > 0 or (total_row and r == last)
-                    self._font(run, "body", pt, "ink", strong)
+                if symbols and c in sym_cols and r == 0 and not any(
+                        isinstance(rw[c], dict) and rw[c].get("label") for rw in rows if c < len(rw)):
+                    p.alignment = PP_ALIGN.CENTER  # header sits over centred symbols
+                if str(head):
+                    run = p.add_run()
+                    run.text = str(head)
+                    if r == 0:
+                        self._font(run, "body", self.size("caption"),
+                                   "accent" if highlighted else "muted", highlighted)
+                    else:
+                        strong = bool(detail) and c > 0 or (total_row and r == last)
+                        self._font(run, "body", pt, "ink", strong)
+                else:  # no empty run: LibreOffice would size the line at its 18 pt default
+                    p._p.get_or_add_endParaRPr().set("sz", str(int(pt * 100)))
                 if detail and r > 0:
                     p2 = tf.add_paragraph()
                     p2.alignment = p.alignment
@@ -428,6 +470,9 @@ class Canvas:
         if highlight_col is not None:  # accent cap above the recommended column
             cx = x + sum(col_w[:highlight_col])
             self.box(cx, y - 2, col_w[highlight_col], 2, fill="accent")
+        for sym, cx, cy in glyphs:  # drawn over the table so they stay centred in their cells
+            if sym is not None:
+                draw_symbol(self, symbols, sym, cx, cy, sym_d)
         return gf, sum(heights)
 
     def _cell_borders(self, cell, top=None, bottom=None):
