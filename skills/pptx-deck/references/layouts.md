@@ -111,12 +111,55 @@ never by color alone), `total_row: true` (last row emphasized). ≤ 7 × 7.
 
 ### `chart`
 `chart`: `type` (`column`, `bar`, `stacked_column`, `stacked_bar`, `line`,
-`doughnut`, `pie`), `categories`, `series: [{name, values}]`, `highlight`
-(category index with one series: that bar in the accent, others muted),
-`unit` (axis label shown above the chart), `number_format` (e.g. `'0%'`,
-`'#,##0'`), `labels` (direct data labels; default true, which also hides the
-value axis), `legend`. `takeaway`: the reading of the chart, placed beside it.
-Rules in [data-viz.md](data-viz.md).
+`waterfall`, `doughnut`, `pie`), `categories`, `series: [{name, values}]`,
+`unit` (the line above the chart: metric, scope, period, unit), `number_format`
+(e.g. `'0%'`, `'#,##0'`), `labels` (direct data labels; default true, which
+also hides the value axis), `legend`, `min` / `max` (value axis bounds).
+
+| Key | Effect |
+|---|---|
+| `highlight` | One series: category index, name, or a list of them, in `colors.accent`; the rest grey |
+| `highlight_series` | Several series: index or list in `colors.accent`; the others in a grey ramp |
+| `series_kind` | `ordered` (accent ramp, dark to light; default for stacks and multi-series column, bar and line) or `nominal` (`colors.series`) |
+| `end_labels` | Line charts: series name and last value at each line's end, no legend. Default on with up to 6 series |
+| `estimates` | `{from: category, suffix: e, note: ...}`: lines dashed and bars lighter from that category on; the footer explains it |
+| `annotations` | `ref_line`, `band`, `callout`, `delta` on column, bar and line charts (below) |
+| `panels` | 2–4 charts in one row (below) |
+
+`waterfall` takes `steps: [{label, value}]` instead of categories and series,
+plus optional `start: {label, value}` and `total: "End label"`. Rises use
+`colors.positive`, falls `colors.negative`, start and end `colors.ink`; every
+bar is labeled. The running total must stay at or above zero.
+
+```yaml
+annotations:
+  - { kind: ref_line, value: 40, label: "Target {value}" }   # value: a number or mean
+  - { kind: band, from: "2026", to: "2027", label: Forecast } # shaded category span
+  - { kind: callout, at: "2025", text: "Launch" }             # pill with a leader to the point
+  - { kind: delta, from: "2024", to: "2026", fmt: pp }        # pp | pct | x | abs, computed
+```
+
+Categories are referenced by name, or by index when no category has that name.
+`{value}` in a label is replaced by the computed value in the chart's number
+format; a delta's text is always computed from the plotted values. Callouts
+and deltas sit in lanes above the plot (right of horizontal bars) so they never
+cover data; keep to the 1–3 the headline needs.
+
+`panels: [chart spec, ...]` draws 2–4 native charts on one shared header line
+(each panel's `title` in bold over its `unit` in caption size) and one
+baseline. Panels with the same `unit` share one value range and one plot
+rectangle; `shared_scale: false|true` overrides. One key is drawn for all
+panels when bars or columns have several series; line panels label their ends.
+
+`commentary: {text | bullets, side: right | left, width: 3 | 4}` puts the
+reading in a column of that many grid columns beside the exhibit, behind an
+accent rule; text is `type.lead` at 4 columns and `type.body` at 3. It works on
+`chart`, `table`, `image` and `diagram`. `takeaway: "..."` is the same as
+`commentary` on the right, 4 columns wide.
+
+`source` is a string or a footer object with notes, question, base, `n` and
+date; `survey: true` on the slide asks the lint for `n`.
+Rules and examples in [data-viz.md](data-viz.md).
 
 ### `process`
 `steps`: strings or `{title, body}`; 3–5. `current`: index of the active step;

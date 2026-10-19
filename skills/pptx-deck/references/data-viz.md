@@ -15,10 +15,10 @@ to look analytical.
 | What changed between two states? | Paired bars or a `stats` delta | Same definition and basis; distinguish absolute vs relative change |
 | How does a total divide into parts? | Stacked bar or column | State the denominator; show totals if share alone misleads |
 | Parts of one whole, ≤ 5 parts | Pie or doughnut (allowed) | Only true parts-of-whole summing to 100%; otherwise bars |
-| Which contributors explain an additive change? | Waterfall (`custom`) | Signed changes reconcile start to end |
+| Which contributors explain an additive change? | `chart` type `waterfall` | Signed changes reconcile start to end |
 | How do two measured variables relate? | Scatter (`custom`) | Units and scales explicit; correlation is not mechanism |
 | Which actions fit two criteria? | Priority matrix (`custom` or `diagram`) | Define criteria and thresholds; qualitative regions if no scores |
-| Several entities on the same dimensions | Aligned bars or small multiples | Shared scales, same criterion order, direct labels |
+| Several entities on the same dimensions | Aligned bars or small multiples (`chart.panels`) | Shared scales, same criterion order, direct labels |
 | Normalized capability profile | Radar only if profile shape matters | Same axes, rubric, and direction; else aligned bars |
 | Exact value at row × column | `table` | Keep units visible; respect table density |
 
@@ -33,7 +33,7 @@ linked detail slide. Aggregate only on a stated basis; keep exceptions.
 
 Charts are native python-pptx charts, editable in PowerPoint with their data
 workbook embedded. Supported types: `bar` (horizontal), `column`, `line`,
-`stacked_bar`, `stacked_column`, `pie`, `doughnut`.
+`stacked_bar`, `stacked_column`, `waterfall`, `pie`, `doughnut`.
 Example (all keys: [layouts.md](layouts.md#chart)):
 
 ```yaml
@@ -43,8 +43,9 @@ Example (all keys: [layouts.md](layouts.md#chart)):
     type: column
     categories: [2023, 2024, 2025]
     series:
-      - { name: Region B, values: [12, 19, 31] }   # highlight series first
+      - { name: Region B, values: [12, 19, 31] }   # the series the headline names
       - { name: Region A, values: [10, 11, 13] }
+    highlight_series: 0   # Region B in the accent, Region A in grey
     unit: "USD m"
     labels: true          # direct data labels; hides the value axis
   source: "Finance ledger, FY2023–FY2025, USD millions"
@@ -52,9 +53,10 @@ Example (all keys: [layouts.md](layouts.md#chart)):
 
 Rules for the generator and for `custom` charts alike:
 
-- **Highlight series = `colors.series[0]`.** The series the headline names comes
-  first; the others use muted series colors (`colors.series[1]` or
-  `colors.muted`). Do not give every series a saturated color.
+- **The highlight color is `colors.accent`.** Put what the headline names in the
+  accent and everything else in grey: `highlight` for categories of one series,
+  `highlight_series` for whole series. Do not give every series a saturated color.
+  Without a highlight, a single series keeps `colors.series[0]`.
 - **Direct labels** on bars or line ends where practical; then drop the legend.
   Color alone must not carry meaning: use labels, lightness, or position too.
 - **The author computes ratios, shares, and deltas** before writing the spec, and
@@ -79,6 +81,88 @@ Rules for the generator and for `custom` charts alike:
   from that row pitch.
 - An annotation for a headline multiple or range attaches to the actual data
   points (within about 1 pt), not to a guessed position.
+
+### Exhibit footer
+
+Every quantitative exhibit carries a footer. The reader checks a number in this
+order: what is in it, who was asked, how many, when, and where it comes from. A
+`source` object renders exactly that order, above the footer band, growing
+upward so the body limit shrinks and the headline stays put:
+
+```yaml
+survey: true                       # the lint then asks for n
+source:
+  notes: ["Top two answers combined."]   # "1) ..." keyed to a ¹⁾ mark in the unit or a category
+  question: How likely are you to renew?
+  base: Active members
+  n: {North: 412, South: 365}      # or one integer; per segment when segments are compared
+  as_of: Sep 2026
+  rounding: true                   # adds the rounding caveat
+  text: Member survey; own analysis
+```
+
+Lines: notes (with the rounding caveat and any estimate note), then
+`Q: … · Base: … · n = … · As of …`, then `Source: …` (label from
+`copy.source_label`, "출처" in Korean decks). A plain string is still one source
+line. Keep the footer to three lines; move the rest to the speaker notes.
+
+### Color: one accent, grey context, ramps for order
+
+- `highlight` (one series) and `highlight_series` (several) put the focus in
+  `colors.accent` and the rest in grey tints of `colors.muted`.
+- Ordered series (stack segments, size bands, years) get a ramp of accent tints
+  from dark to light, so the order is visible: `series_kind: ordered`, the default
+  for stacks and multi-series column, bar and line charts when
+  `colors.series_mode` is `ramp`.
+- Categories with no order (channels, products) are `series_kind: nominal` and
+  take `colors.series` in order. Panels that repeat the same series must give
+  them the same colors.
+
+### Direct labels
+
+A line chart labels each line at its end with name and latest value, and drops
+the legend (`end_labels`, default with up to 6 series). The reader never travels
+to a key and back, and the latest value, usually the point, is labeled. Close
+ends are nudged apart. More than 6 lines: highlight one or split into panels.
+
+### Estimates and forecasts
+
+`estimates: {from: "2026", suffix: e}` marks every value from that category on:
+lines continue dashed from the last actual point, bars are lighter and outlined,
+category labels take the suffix, and the footer says what it means. A projection
+read as an outcome is the most damaging misreading a chart can cause.
+
+### Annotations: put the headline comparison on the chart
+
+When the headline is a difference, show the difference; do not leave the reader
+to subtract. `annotations` work on column, bar and line charts:
+
+| Kind | Draws | Use for |
+|---|---|---|
+| `ref_line` | Dashed line at `value` (a number or `mean`), label at its end | Average, target, threshold |
+| `band` | Shaded span of categories, label above | Forecast years, a policy period |
+| `callout` | Pill with a leader to one point | The one event that explains a point |
+| `delta` | Bracket from one category to another with the computed change | `+18pp`, `+20%`, `2.4x` |
+
+`fmt` of a delta: `pp` for differences between shares (percentage points;
+"%p" in Korean decks), `pct` for relative change, `x` for a multiple, `abs` in the
+chart's number format. The value is computed from the plotted data, never typed.
+Use 1–3 callouts and deltas, tied to the headline; none on charts with more than
+8 categories. To place them on the data, the chart's plot area is fixed and its
+value axis pinned (`min` / `max` override the bounds).
+
+### Panels
+
+`chart.panels` draws 2–4 charts in one row, each with a bold metric over its
+unit, on one baseline. Panels with the same unit share one scale and one plot
+size, so equal values are equal heights. Different metrics keep their own scale
+and unit line; never put two scales of the same metric side by side.
+
+### Commentary beside an exhibit
+
+`commentary: {text | bullets, side, width: 3 | 4}` reserves 3 or 4 grid columns
+on the right or left for the reading of a chart, table, image or diagram;
+`takeaway` is the right-hand, 4-column form. Write the reading, not a caption.
 
 ## 3. Establish the measurement basis
 
@@ -145,7 +229,8 @@ choose an explicit nonzero display range and label it.
 - **Differences.** Label a gap in the metric's own unit; use percentage points only
   for differences between ratios. Show both end values when claiming a multiple.
 - **Concept curves** with no data say so on the axis and carry no numeric ticks.
-- **Waterfall.** Only additive contributions on one basis:
+- **Waterfall** (native `waterfall` type; the same rules apply to custom bridges).
+  Only additive contributions on one basis:
   `end = start + Σ changes`; `stepStart[i] = start + Σ changes before i`.
   Start and end totals rise from zero; contributions float. Check the
   reconciliation including rounding. Overlapping effects or different
@@ -173,7 +258,7 @@ python scripts/render_deck.py out/deck.pptx
 - Annotations point to actual data and separate observation from inference.
 - Every number in the headline or lead traces to the plotted data or a recorded
   calculation.
-- The accent (`colors.series[0]`) marks what the headline names; the context is
+- The accent (`colors.accent`) marks what the headline names; the context is
   distinguishable without hue alone.
 - Labels fit inside the plot and stay legible in the render.
 

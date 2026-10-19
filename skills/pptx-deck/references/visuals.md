@@ -79,6 +79,8 @@ headline already states the conclusion, drop the sub-lead.
 - Status is a dot **plus a label**. A dot alone carries no information for
   color-blind readers.
 - If status or color carries meaning, put a **legend under the table — always**.
+- When the table needs a reading, put it in a `commentary` column beside the
+  table, not in a sub-lead above it: the rows keep their height.
 - One highlighted row only. Three highlighted rows are not emphasis.
 - State the reference date in a caption ("As of 2026-07").
 - Table style (header fill, rules, zebra) is a brand choice; the default is
@@ -120,11 +122,16 @@ label "After" and the value in accent → the change ("61% lower") as the focus.
 
 ### Rules
 
-- Series colors follow `colors.series` in order; the first is the highlight
-  series. Do not invent extra colors.
-- Highlight only the bar that matters in `colors.accent`; the rest muted. If every
-  bar is accent, nothing is.
-- **No chart without a source.** Put the source line under every chart.
+- Highlight only what the headline names in `colors.accent` (`highlight` for
+  bars of one series, `highlight_series` for whole series); the rest grey. If
+  every bar is accent, nothing is.
+- Ordered series (stack segments, size bands) use a ramp of accent tints;
+  categories with no order use `colors.series` in order. Do not invent extra
+  colors ([data-viz.md](data-viz.md) §2).
+- **No chart without a source.** Put the footer under every chart: notes, then
+  question, base and n for survey figures, then the source.
+- Put the comparison the headline makes on the chart (a reference line, a
+  computed delta) instead of leaving the reader to subtract.
 - Default: no pie or donut. One share → a meter; several → horizontal bars.
   An organization may allow them in `brand/guidelines.md`.
 
@@ -178,7 +185,9 @@ A deck with a placeholder left is not finished.
 - Measure labels at the size they render on the slide. Keep normal body and label
   sizes where possible; no text may fall below `type.min`. If the composition
   cannot meet that, split into overview and detail.
-- Add a short diagram note naming the relationship or change to look at.
+- Add a short diagram note naming the relationship or change to look at — a
+  `caption` under it, or a `commentary` column beside it when the note is the
+  argument.
 
 ---
 
@@ -186,6 +195,8 @@ A deck with a placeholder left is not finished.
 
 - Screenshots are fitted (contain), never cropped — cropping defeats the purpose.
 - Several screenshots sit in columns of one grid, not stacked as large boxes.
+- Say what to look at in a `commentary` column (3 or 4 grid columns) beside the
+  image; it reads before the eye wanders over the screenshot.
 - Text over a photo needs a scrim (a dark translucent band) for contrast.
 - Alt text is required and states **what is visible** ("The approval step in the
   order editor", not "editor screen").
