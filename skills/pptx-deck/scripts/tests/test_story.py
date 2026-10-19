@@ -388,6 +388,11 @@ def test_lint_next_steps_frequency_and_count(tmp_path):
     assert not any("next_steps on" in m for m in messages(lint_slides(tmp_path, slides)))
     slides[0]["next_steps"] = ["only one"]
     assert any("has 1 items" in m for m in messages(lint_slides(tmp_path, slides), "WARN"))
+    slides.append({"layout": "statement", "text": "One sentence", "next_steps": ["one", "two"]})
+    slides.append({"layout": "no_such_layout", "title": "x"})
+    found = messages(lint_slides(tmp_path, slides))
+    assert any("ignored on a 'statement' slide" in m for m in found)
+    assert any("unknown layout" in m for m in found)
 
 
 # -- 7. Korean conventions ------------------------------------------------------------------

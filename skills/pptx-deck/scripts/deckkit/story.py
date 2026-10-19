@@ -83,7 +83,6 @@ def tracker_style(brand: Brand, meta: dict) -> str:
 
 def prepare(ctx, slides: list, meta: dict):
     """Attach the deck-level reading structure to the build context."""
-    ctx.meta = meta or {}
     ctx.sections = sections(slides)
     ctx.section_at = {sec["slide"]: k for k, sec in enumerate(ctx.sections)}
     ctx.section = None  # index into ctx.sections of the chapter being built

@@ -180,8 +180,10 @@ def lint_story(slides, meta, brand, add):
         add("ERROR", 0, f"tracker '{tracker}' is not one of {', '.join(story.TRACKERS)}")
     elif tracker != "none" and len(sections) < 2:
         add("WARN", 0, f"tracker '{tracker}' needs two or more section slides; none is drawn")
+        tracker = "none"
     elif tracker == "tabs" and len(sections) > story.MAX_TABS:
         add("WARN", 0, f"{len(sections)} sections are too many tabs; the tracker falls back to dots")
+        tracker = "dots"
     content = [(i, s) for i, s in enumerate(slides, start=1) if s.get("layout", "bullets") not in STRUCTURAL]
     measure_chars = brand.get("type.max_measure")
     body = float(brand["type.body"])
@@ -192,6 +194,8 @@ def lint_story(slides, meta, brand, add):
     with_steps = 0
     for i, s in enumerate(slides, start=1):
         name = s.get("layout", "bullets")
+        if name not in LAYOUTS:
+            continue  # reported above
         seen_section = seen_section or name == "section"
         if s.get("eyebrow") == "auto":
             if tracker == "tabs" and seen_section:
@@ -208,8 +212,8 @@ def lint_story(slides, meta, brand, add):
             items = ns if isinstance(ns, list) else (ns or {}).get("items", [])
             if not 2 <= len(items) <= 4:
                 add("WARN", i, f"next_steps has {len(items)} items; keep 2–4")
-            if name in STRUCTURAL:
-                add("WARN", i, f"next_steps is ignored on a '{name}' slide")
+            if LAYOUTS[name].structural or s.get("full_bleed"):
+                add("WARN", i, f"next_steps is ignored on a '{name}' slide without the content frame")
         if name == "summary":
             blocks = s.get("blocks", [])
             if not 2 <= len(blocks) <= 4:
