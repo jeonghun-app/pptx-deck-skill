@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Skills for generating native, editable PowerPoint decks in your organization's own design.",
-    "version": "0.2.0"
+    "version": "1.0.0"
   },
   "plugins": [
     {
