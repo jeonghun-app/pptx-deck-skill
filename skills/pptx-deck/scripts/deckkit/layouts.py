@@ -82,7 +82,7 @@ def headline(c: Canvas, spec: dict, ctx) -> float:
                    font="heading", color=c.ink, bold=bool(b.get("type.heading_bold")),
                    spacing=b.get("type.heading_line_spacing"), anchor="top", name="Title",
                    check_fit=False)
-        lines = measure.count_lines(title, b["type.title"], w)
+        lines = measure.count_lines(title, b["type.title"], w, "heading")
         allowed = int(b.get("layout.title_lines") or 1)
         if lines > allowed:
             limit = "one line" if allowed == 1 else f"at most {allowed} lines"
@@ -186,17 +186,29 @@ def bullet_items(items):
 def draw_bullets(c: Canvas, x, y, w, items, size="lead", gap=None) -> float:
     gap = c.size(size) * 0.6 if gap is None else gap
     w = reading_width(c, size, w)  # narrow columns are unaffected; wide lists keep the measure
+    paras = []
     for text, subs in bullet_items(items):
-        h = c.text_height(text, size, w - c.size(size) * 1.1)
-        c.text(x, y, w, h, text, size=size, bullet="•", color=c.body_color, bold_color=c.ink)
-        y += h
-        for sub in subs:
-            sh = c.text_height(sub, "body", w - c.size(size) * 2.2)
-            c.text(x + c.size(size) * 1.1, y + 2, w - c.size(size) * 1.1, sh, sub, size="body",
-                   bullet="–", color="muted")
-            y += sh + 2
-        y += gap
-    return y - gap
+        paras.append({"text": text, "size": size, "bullet": "•", "color": c.body_color,
+                      "bold_color": c.ink, "space_before": gap})
+        paras += [{"text": sub, "size": "body", "bullet": "–", "color": "muted",
+                   "left": c.size(size) * 1.1, "space_before": 2.0} for sub in subs]
+    if not paras:
+        return y
+    # one box: the application flows the lines, so gaps stay even however lines break
+    _, h = c.paragraphs(x, y, w, paras, name="Bullets")
+    return y + h
+
+
+def title_block(c: Canvas, x, y, w, h, text, *, size, spacing=None, bold=None, bold_color=None,
+                name="Title"):
+    """A large title whose last line sits on the line y + h.
+
+    The box is bottom-anchored with headroom above, so a title that renders longer
+    than estimated grows upward into free space instead of down into the text below.
+    """
+    bold = bool(c.brand.get("type.heading_bold")) if bold is None else bold
+    return c.text(x, y - h * 0.6, w, h * 1.6, text, size=size, font="heading", color=c.ink,
+                  bold=bold, spacing=spacing, bold_color=bold_color, anchor="bottom", name=name)
 
 
 # -- structural slides -------------------------------------------------------
@@ -208,14 +220,12 @@ def cover(c: Canvas, spec, ctx):
     title = spec.get("title", "")
     if ctx.title_placeholder(c, title, subtitle=spec.get("subtitle")):
         return
-    th = c.text_height(title, "hero", w, b.get("type.heading_line_spacing"))
+    th = c.text_height(title, "hero", w, b.get("type.heading_line_spacing"), font="heading")
     y = b.height * 0.42 - th / 2
     if spec.get("eyebrow"):
         c.text(x, y - b["type.label"] * 2.4, w, b["type.label"] * 1.4, eyebrow_text(c, spec["eyebrow"]),
                size="label", font="mono", color="on_dark_body" if c.dark else "accent")
-    c.text(x, y, w, th, title, size="hero", font="heading", color=c.ink,
-           bold=bool(b.get("type.heading_bold")), spacing=b.get("type.heading_line_spacing"),
-           name="Title")
+    title_block(c, x, y, w, th, title, size="hero", spacing=b.get("type.heading_line_spacing"))
     y += th + b["layout.gutter"]
     if spec.get("subtitle"):
         sw = reading_width(c, "lead", w)
@@ -235,15 +245,13 @@ def section(c: Canvas, spec, ctx):
     title = spec.get("title", "")
     if ctx.title_placeholder(c, title, subtitle=spec.get("subtitle")):
         return
-    th = c.text_height(title, "section", w, b.get("type.heading_line_spacing"))
+    th = c.text_height(title, "section", w, b.get("type.heading_line_spacing"), font="heading")
     y = b.height * 0.45 - th / 2
     if spec.get("number") is not None:
         c.text(x, y - b["type.section"] * 1.7, w, b["type.section"] * 1.5, f"{spec['number']:0>2}"
                if str(spec["number"]).isdigit() else str(spec["number"]), size="section",
                font="mono", color="accent", name="Number")
-    c.text(x, y, w, th, title, size="section", font="heading", color=c.ink,
-           bold=bool(b.get("type.heading_bold")), spacing=b.get("type.heading_line_spacing"),
-           name="Title")
+    title_block(c, x, y, w, th, title, size="section", spacing=b.get("type.heading_line_spacing"))
     if spec.get("subtitle"):  # the chapter's thesis; the summary layout can repeat it
         sy = y + th + b["layout.gutter"]
         sw = reading_width(c, "lead", w)
@@ -258,10 +266,9 @@ def closing(c: Canvas, spec, ctx):
     title = spec.get("title") or b.get("copy.closing_title", "Thank you")
     if ctx.title_placeholder(c, title, subtitle=spec.get("subtitle")):
         return
-    th = c.text_height(title, "hero", w)
+    th = c.text_height(title, "hero", w, font="heading")
     y = b.height * 0.42 - th / 2
-    c.text(x, y, w, th, title, size="hero", font="heading", color=c.ink,
-           bold=bool(b.get("type.heading_bold")), name="Title")
+    title_block(c, x, y, w, th, title, size="hero")
     y += th + b["layout.gutter"]
     for key, size in (("subtitle", "lead"), ("contact", "body")):
         if spec.get(key):
@@ -277,7 +284,7 @@ def statement(c: Canvas, spec, ctx):
     b = c.brand
     x, w = b.content_left, b.content_width * 0.86
     text = spec.get("text") or spec.get("title", "")
-    th = c.text_height(text, "statement", w, b.get("type.heading_line_spacing"))
+    th = c.text_height(text, "statement", w, b.get("type.heading_line_spacing"), font="heading")
     support = spec.get("support")
     sw = reading_width(c, "lead", w)
     sh = c.text_height(support, "lead", sw) if support else 0
@@ -285,9 +292,8 @@ def statement(c: Canvas, spec, ctx):
     if spec.get("eyebrow"):
         c.text(x, y - b["type.label"] * 2.6, w, b["type.label"] * 1.4, eyebrow_text(c, spec["eyebrow"]),
                size="label", font="mono", color="accent")
-    c.text(x, y, w, th, text, size="statement", font="heading", color=c.ink,
-           bold=bool(b.get("type.heading_bold")), spacing=b.get("type.heading_line_spacing"),
-           bold_color="accent", name="Statement")
+    title_block(c, x, y, w, th, text, size="statement", spacing=b.get("type.heading_line_spacing"),
+                bold_color="accent", name="Statement")
     if support:
         c.text(x, y + th + b["layout.gutter"], sw, sh, support, size="lead", color=c.body_color)
 
@@ -298,11 +304,11 @@ def quote(c: Canvas, spec, ctx):
     x, w = b.content_left + 36, b.content_width * 0.8
     raw = str(spec.get("text", "")).strip("“”\"")
     text = f"“{raw}”"
-    th = c.text_height(text, "statement", w, b.get("type.heading_line_spacing"))
+    th = c.text_height(text, "statement", w, b.get("type.heading_line_spacing"), font="heading")
     y = (b.height - th) / 2 - 20
     c.box(b.content_left, y + 4, 3, th - 8, fill="accent", radius=0)
-    c.text(x, y, w, th, text, size="statement", font="heading", color=c.ink,
-           spacing=b.get("type.heading_line_spacing"), name="Quote")
+    title_block(c, x, y, w, th, text, size="statement", spacing=b.get("type.heading_line_spacing"),
+                bold=False, name="Quote")
     who = " · ".join(str(v) for v in (spec.get("attribution"), spec.get("role")) if v)
     if who:
         c.text(x, y + th + b["layout.gutter"], w, b["type.body"] * 1.6, who, size="body", color=c.muted)

@@ -57,6 +57,11 @@ section on content slides ([layouts.md](layouts.md), fixed frame).
 | `no_footer` | `true` hides footer, page number and logo on a content slide |
 | `no_rule` | `true` hides the accent rule under the headline on this slide |
 
+**Quote text that contains a comma inside `[ ... ]` lists.** In YAML, a comma
+separates items in a bracketed list, so `[Faster, cheaper reviews]` is two
+bullets. Write `["Faster, cheaper reviews"]`, or use one `- item` per line.
+In a table, `[keyword, detail]` is deliberately two parts.
+
 Text values may use `**bold**` for the one phrase that carries the point. On
 statement and chart-takeaway text, bold renders in the accent color.
 

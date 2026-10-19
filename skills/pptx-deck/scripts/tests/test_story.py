@@ -218,10 +218,14 @@ def test_lint_summary_heading_must_match_its_section(tmp_path):
 
 
 def test_lint_long_deck_without_summary(tmp_path):
-    slides = [{"layout": "bullets", "title": f"Finding number {k} changes the plan", "bullets": ["a"]}
-              for k in range(10)]
+    body = [{"layout": "bullets", "title": f"Finding number {k} changes the plan", "bullets": ["a"]}
+            for k in range(10)]
+    # a summary restates section conclusions: expected only once the deck has sections
+    assert not any("no summary" in m for m in messages(lint_slides(tmp_path, body)))
+    sections = [{"layout": "section", "number": n, "title": f"Part {n}"} for n in (1, 2)]
+    slides = [sections[0]] + body[:5] + [sections[1]] + body[5:]
     assert any("no summary" in m for m in messages(lint_slides(tmp_path, slides), "WARN"))
-    slides[0] = summary_deck()[0]
+    slides[1] = summary_deck()[0]
     slides[0]["blocks"] = [{"heading": "One", "points": ["a"]}, {"heading": "Two", "points": ["b"]}]
     assert not any("no summary" in m for m in messages(lint_slides(tmp_path, slides)))
 

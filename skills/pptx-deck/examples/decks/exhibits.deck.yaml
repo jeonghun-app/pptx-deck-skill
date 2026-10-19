@@ -28,6 +28,25 @@ slides:
       - Layouts that place commentary and panels beside the data
     notes: The deck moves from what a number is, to what it shows, to where it sits.
 
+  - layout: summary
+    eyebrow: Summary
+    title: A chart works when its point is on the chart, not in the legend
+    blocks:
+      - section: 1
+        points:
+          - "State units, base and sample size once, in the footer"
+          - "Highlight the focus in the accent and set context in grey"
+      - section: 2
+        points:
+          - "Compute deltas and multiples from the data"
+          - "Mark estimates in the encoding and the label"
+      - section: 3
+        points:
+          - "Put the reading in a column beside the chart"
+          - "Line up panels on one header line and one baseline"
+    so_what: Choose the option that makes each chart's point without extra reading
+    notes: The three sections in one page; each block repeats its section's title.
+
   - layout: section
     number: 1
     title: Say what the numbers are

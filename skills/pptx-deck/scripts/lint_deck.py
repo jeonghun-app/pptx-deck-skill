@@ -122,8 +122,8 @@ def lint_chart(add, i, ch, where=""):
 
 
 def lint_commentary(add, i, s, name):
-    if name not in ("chart", "table", "image", "diagram"):
-        add("WARN", i, f"commentary has no effect on '{name}' slides (chart, table, image, diagram)")
+    if name not in ("chart", "table", "image", "diagram", "matrix"):
+        add("WARN", i, f"commentary has no effect on '{name}' slides (chart, table, image, diagram, matrix)")
     if s.get("commentary") and s.get("takeaway"):
         add("WARN", i, "both commentary and takeaway; takeaway is ignored — keep one")
     note = s.get("commentary")
@@ -142,6 +142,7 @@ def lint(deck_path: Path, brand_path=None):
     if brand_path is None and meta.get("brand"):
         brand_path = deck_path.parent / meta["brand"]
     brand = load_brand(brand_path)
+    measure.set_fonts(brand)
     out = []
 
     def add(level, slide, msg):
@@ -177,7 +178,7 @@ def lint(deck_path: Path, brand_path=None):
             if not title:
                 add("ERROR", i, "content slide without a headline")
             else:
-                lines = measure.count_lines(title, brand["type.title"], width)
+                lines = measure.count_lines(title, brand["type.title"], width, "heading")
                 if lines > lines_allowed:
                     limit = "one line" if lines_allowed == 1 else f"{lines_allowed} lines"
                     add("WARN", i, f"headline wraps past {limit} — shorten it rather than shrinking the type")
@@ -357,7 +358,8 @@ def lint_story(slides, meta, brand, add):
     if content and with_steps / len(content) > 0.25:
         add("WARN", 0, f"next_steps on {with_steps} of {len(content)} content slides; keep it for the "
                        "pages that close an argument (at most one in four)")
-    if len(content) >= 10 and not any(s.get("layout") == "summary" for _, s in content):
+    # a summary restates section conclusions, so it is expected only in a sectioned story
+    if len(content) >= 10 and len(sections) >= 2 and not any(s.get("layout") == "summary" for _, s in content):
         add("WARN", 0, f"{len(content)} content slides and no summary; add a summary slide that "
                        "states each section's conclusion")
 

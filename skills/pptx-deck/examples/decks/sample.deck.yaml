@@ -30,6 +30,27 @@ slides:
       - What the pilot costs and how we judge it
     notes: We will answer three questions in order.
 
+  - layout: summary
+    eyebrow: Executive summary
+    title: Checking every pull request finds blockers while they are cheap
+    blocks:
+      - section: 1
+        points:
+          - Most blockers surface only after the branch is cut
+          - A blocker found on the release branch takes about 10x longer to fix
+      - section: 2
+        points:
+          - The same checks run earlier, on one change at a time
+          - Checks run in an isolated runner and never touch production
+      - heading: What the pilot costs
+        points:
+          - One shared runner pool and two weeks of setup
+          - A go / no-go decision after four weeks, on measures agreed now
+    so_what: Approve a four-week pilot with two teams
+    notes: >
+      In one page: blockers are found late and cost ten times more to fix there.
+      Running the same checks per pull request fixes that, and the pilot is cheap.
+
   - layout: section
     number: 1
     title: Where blockers are found today
@@ -157,7 +178,7 @@ slides:
       - "**Share of blockers found before merge** — target: a clear majority"
       - "**Median time to fix** — target: lower than on the release branch"
       - text: "**Median time to merge** — must not grow by more than a small margin"
-        sub: [Measured on the same two teams, before and during the pilot]
+        sub: ["Measured on the same two teams, before and during the pilot"]
     notes: These measures are agreed now so the result is not argued afterwards.
 
   - layout: code
@@ -170,7 +191,7 @@ slides:
 
   - layout: image
     eyebrow: Appendix
-    title: Each gate can be switched off per repository while teams adopt it
+    title: Each gate can be switched off per repository during adoption
     image: assets/pipeline-settings.png
     alt: Pipeline settings screen with one toggle per release gate
     caption: Wireframe of the pipeline settings screen; one gate is switched off.

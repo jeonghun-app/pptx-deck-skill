@@ -168,16 +168,16 @@ class Canvas:
                            bold or strong, italic)
         if check_fit:
             inner_w = w - (inset[0] + inset[2] if isinstance(inset, tuple) else 2 * inset)
-            need = sum(measure.text_height(p, pt, inner_w - (pt if bullet else 0), spacing)
+            need = sum(measure.text_height(p, pt, inner_w - (pt if bullet else 0), spacing, font)
                        for p in paras) + paragraph_gap * (len(paras) - 1)
             if need > h + 0.5:
                 label = measure.strip_markup(paras[0])[:40]
                 self.warn(f"text may overflow its box ({need:.0f}pt needed, {h:.0f}pt available): '{label}'")
         return box
 
-    def _bullet(self, p, char: str, pt: float):
+    def _bullet(self, p, char: str, pt: float, left: float = 0.0):
         ppr = p._p.get_or_add_pPr()
-        ppr.set("marL", str(int(Pt(pt * 1.1))))
+        ppr.set("marL", str(int(Pt(left + pt * 1.1))))
         ppr.set("indent", str(-int(Pt(pt * 1.1))))
         for tag in ("a:buNone", "a:buChar", "a:buClr"):
             for el in ppr.findall(qn(tag)):
@@ -186,10 +186,52 @@ class Canvas:
         etree.SubElement(clr, qn("a:srgbClr")).set("val", self.brand.hex("accent"))
         etree.SubElement(ppr, qn("a:buChar")).set("char", char)
 
-    def text_height(self, content, size, width, spacing=None) -> float:
+    def paragraphs(self, x, y, w, paras, *, name=None):
+        """One text box holding several differently styled paragraphs.
+
+        ``paras`` is a list of dicts: ``text``, ``size``, ``color``, ``bold_color``,
+        ``bullet`` (character or None), ``left`` (extra indent in pt) and
+        ``space_before`` (pt). The application flows the lines, so the gaps between
+        paragraphs stay even whatever the line breaks turn out to be. Returns the
+        box and its estimated height.
+        """
+        spacing = float(self.brand.get("type.line_spacing", 1.2))
+        height = 0.0
+        for k, para in enumerate(paras):
+            pt = self.size(para.get("size", "body"))
+            inner = w - para.get("left", 0.0) - (pt * 1.1 if para.get("bullet") else 0)
+            height += measure.text_height(para["text"], pt, inner, spacing)
+            height += para.get("space_before", 0.0) if k else 0.0
+        box = self.slide.shapes.add_textbox(Pt(x), Pt(y), Pt(w), Pt(height))
+        if name:
+            box.name = name
+        tf = box.text_frame
+        tf.word_wrap = True
+        tf.auto_size = MSO_AUTO_SIZE.NONE
+        self._no_inset(tf, 0)
+        for k, para in enumerate(paras):
+            pt = self.size(para.get("size", "body"))
+            p = tf.paragraphs[0] if k == 0 else tf.add_paragraph()
+            p.alignment = ALIGN["left"]
+            p.line_spacing = spacing
+            if k and para.get("space_before"):
+                p.space_before = Pt(para["space_before"])
+            if para.get("bullet"):
+                self._bullet(p, para["bullet"], pt, para.get("left", 0.0))
+            color = para.get("color") or self.body_color
+            for piece in BOLD.split(str(para["text"])):
+                if not piece:
+                    continue
+                strong = piece.startswith("**") and piece.endswith("**")
+                run = p.add_run()
+                run.text = piece[2:-2] if strong else piece
+                self._font(run, "body", pt, (para.get("bold_color") or color) if strong else color, strong)
+        return box, height
+
+    def text_height(self, content, size, width, spacing=None, font="body") -> float:
         spacing = spacing or float(self.brand.get("type.line_spacing", 1.2))
         paras = content if isinstance(content, list) else str(content).split("\n")
-        return sum(measure.text_height(p, self.size(size), width, spacing) for p in paras)
+        return sum(measure.text_height(p, self.size(size), width, spacing, font) for p in paras)
 
     # -- shapes -------------------------------------------------------------
     def box(self, x, y, w, h, *, fill=None, line=None, line_width=0.75, dash=False,

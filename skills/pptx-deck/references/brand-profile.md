@@ -45,6 +45,14 @@ on every run, so mixed-script text renders in the intended fonts. Choose fonts
 your audience has installed or that your template embeds; install them on the
 machine that renders QA images, or the contact sheet will show substitutes.
 
+The builder measures text to predict line breaks and overflow. It uses the real
+font when it can find one: `file` (and `file_east_asian`) in a role, e.g.
+`body: {latin: Example Sans, file: assets/fonts/ExampleSans-Regular.ttf}`, or
+else the font fontconfig matches for the face name, which is what LibreOffice
+renders with. Without either it falls back to average character widths. If
+your brand font is not installed where you build, point `file` at it, or the
+warnings will reflect the substitute font, not yours.
+
 ### `type`
 | Key | Used for |
 |---|---|

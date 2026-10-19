@@ -32,7 +32,7 @@
 
 ## 예제
 
-아래 세 덱은 모두 [`skills/pptx-deck/examples/decks/`](skills/pptx-deck/examples/decks)의
+아래 덱은 모두 [`skills/pptx-deck/examples/decks/`](skills/pptx-deck/examples/decks)의
 계획 파일을 생성기로 빌드한 결과이며, 손으로 고친 부분이 없습니다. PPTX를 내려받아
 PowerPoint, Keynote 또는 Google Slides에서 열면 모든 요소를 편집할 수 있는지 확인할 수
 있습니다. GitHub는 PPTX를 미리 보여주지 않으므로 아래 이미지는 같은 파일을
@@ -53,21 +53,21 @@ deckkit 함수로 작성한 `custom` 슬라이드입니다
 ### 2. 제안 덱(기본 브랜드)
 
 [⬇ sample-neutral.pptx](docs/examples/sample-neutral.pptx) · 계획 파일:
-[`sample.deck.yaml`](skills/pptx-deck/examples/decks/sample.deck.yaml) · 18장, 기본 레이아웃 전체 포함
+[`sample.deck.yaml`](skills/pptx-deck/examples/decks/sample.deck.yaml) · 19장
 
 | | |
 |---|---|
-| ![표지](docs/images/slides/sample-neutral-01.png) | ![숫자](docs/images/slides/sample-neutral-04.png) |
-| `cover` | `stats`: 출처를 함께 표시한 숫자 |
-| ![차트](docs/images/slides/sample-neutral-05.png) | ![도식](docs/images/slides/sample-neutral-09.png) |
-| `chart`: 네이티브 차트에서 막대 하나를 강조하고 옆에 해석을 둡니다 | `diagram`: 네이티브 도형, 붙어 있는 연결선, 경계 |
-| ![표](docs/images/slides/sample-neutral-10.png) | ![타임라인](docs/images/slides/sample-neutral-11.png) |
-| `table`: 권장 열을 강조합니다 | `timeline` |
-| ![이미지](docs/images/slides/sample-neutral-14.png) | ![카드](docs/images/slides/sample-neutral-15.png) |
+| ![표지](docs/images/slides/sample-neutral-01.png) | ![요약](docs/images/slides/sample-neutral-03.png) |
+| `cover` | `summary`: 장마다 결론 한 묶음, 요청은 하단 띠에 |
+| ![숫자](docs/images/slides/sample-neutral-05.png) | ![차트](docs/images/slides/sample-neutral-06.png) |
+| `stats`: 출처를 함께 표시한 숫자 | `chart`: 네이티브 차트에서 막대 하나를 강조하고 옆에 해석을 둡니다 |
+| ![도식](docs/images/slides/sample-neutral-10.png) | ![표](docs/images/slides/sample-neutral-11.png) |
+| `diagram`: 네이티브 도형, 붙어 있는 연결선, 경계 | `table`: 권장 열을 강조합니다 |
+| ![이미지](docs/images/slides/sample-neutral-15.png) | ![카드](docs/images/slides/sample-neutral-16.png) |
 | `image`: 캡션과 대체 텍스트가 있는 화면 이미지 | `cards`: 한 장을 강조합니다 |
 
 <details>
-<summary>18장 전체 보기</summary>
+<summary>19장 전체 보기</summary>
 
 ![컨택트시트](docs/images/sample-neutral-contact.png)
 
@@ -82,15 +82,56 @@ deckkit 함수로 작성한 `custom` 슬라이드입니다
 
 | | |
 |---|---|
-| ![표지](docs/images/slides/sample-warm-editorial-01.png) | ![도식](docs/images/slides/sample-warm-editorial-09.png) |
-| ![표](docs/images/slides/sample-warm-editorial-10.png) | ![마무리](docs/images/slides/sample-warm-editorial-18.png) |
+| ![표지](docs/images/slides/sample-warm-editorial-01.png) | ![도식](docs/images/slides/sample-warm-editorial-10.png) |
+| ![표](docs/images/slides/sample-warm-editorial-11.png) | ![마무리](docs/images/slides/sample-warm-editorial-19.png) |
 
 <details>
-<summary>18장 전체 보기</summary>
+<summary>19장 전체 보기</summary>
 
 ![컨택트시트](docs/images/sample-warm-editorial-contact.png)
 
 </details>
+
+### 4. 도표: 요점을 스스로 말하는 차트
+
+[⬇ exhibits.pptx](docs/examples/exhibits.pptx) · 계획 파일:
+[`exhibits.deck.yaml`](skills/pptx-deck/examples/decks/exhibits.deck.yaml)
+
+| | |
+|---|---|
+| ![각주](docs/images/slides/exhibits-05.png) | ![끝 라벨](docs/images/slides/exhibits-10.png) |
+| 구조화된 각주: 주석 → 질문 · 대상 · n · 기준일 → 출처 | 선 끝 라벨, 기준선, 추정치는 점선과 표기로 구분 |
+| ![워터폴](docs/images/slides/exhibits-11.png) | ![증감](docs/images/slides/exhibits-12.png) |
+| `waterfall`과 옆 해설 열 | 증감 값은 데이터에서 계산하고 손으로 쓰지 않습니다 |
+| ![패널](docs/images/slides/exhibits-14.png) | ![해설](docs/images/slides/exhibits-18.png) |
+| `panels`: 같은 축과 기준선의 작은 차트 묶음 | 도식 옆 `commentary` |
+
+### 5. 프레임워크: 한 장에서 끝나는 판단
+
+[⬇ frameworks.pptx](docs/examples/frameworks.pptx) · 계획 파일:
+[`frameworks.deck.yaml`](skills/pptx-deck/examples/decks/frameworks.deck.yaml)
+
+| | |
+|---|---|
+| ![매트릭스](docs/images/slides/frameworks-05.png) | ![기호 표](docs/images/slides/frameworks-09.png) |
+| `matrix`: 사분면 이름, 양 축의 양끝, 배치 근거 표시 | 기호 표: 하비볼, 범례, "해당 없음"을 따로 표시 |
+| ![전환](docs/images/slides/frameworks-13.png) | ![셰브론](docs/images/slides/frameworks-15.png) |
+| `shift`: 현재 → 목표, 한 행에 한 항목 | `process` 셰브론과 정렬된 행, "현재" 표시 |
+| ![번호 열](docs/images/slides/frameworks-18.png) | ![숫자 격자](docs/images/slides/frameworks-21.png) |
+| 번호를 단 열린 열로 쓰는 권고 | 최대 9개 값의 `stats` 격자 |
+
+### 6. 스토리: 읽는 덱
+
+[⬇ story.pptx](docs/examples/story.pptx) · 계획 파일:
+[`story.deck.yaml`](skills/pptx-deck/examples/decks/story.deck.yaml) · `meta.mode: read`
+(고정된 영역에 두 줄 제목)와 점 진행 표시
+
+| | |
+|---|---|
+| ![요약](docs/images/slides/story-02.png) | ![진행 표시](docs/images/slides/story-05.png) |
+| 장별 결론으로 만든 요약 페이지 | 진행 표시, `eyebrow: auto`, 한 줄 길이 상한 |
+| ![답변 띠](docs/images/slides/story-06.png) | ![다음 단계](docs/images/slides/story-09.png) |
+| 질문형 제목과 바로 아래 답변 띠 | 논지를 마무리하는 `next_steps` 띠 |
 
 레이아웃이나 브랜드를 바꾼 뒤에는 `./build-examples.sh`로 예제를 다시 만듭니다.
 
@@ -164,9 +205,10 @@ python scripts/render_deck.py out/my.pptx
 python ../pptx-layout-audit/scripts/deck-craft-lint.py out/my.pptx --brand brand/brand.yaml
 ```
 
-레이아웃: `cover`, `section`, `agenda`, `statement`, `bullets`, `two_column`,
-`cards`, `stats`, `table`, `chart`, `process`, `timeline`, `diagram`, `quote`,
-`image`, `code`, `closing`, `custom`. `custom`은 브랜드가 연결된 그리기 함수로 직접
+레이아웃: `cover`, `section`, `agenda`, `summary`, `statement`, `bullets`,
+`two_column`, `cards`, `stats`, `table`, `chart`(`waterfall`, `panels` 포함),
+`matrix`, `shift`, `process`, `timeline`, `diagram`, `quote`, `image`, `code`,
+`closing`, `custom`. `custom`은 브랜드가 연결된 그리기 함수로 직접
 작성하는 Python 렌더러입니다. 자세한 내용은
 [`references/layouts.md`](skills/pptx-deck/references/layouts.md)를 봅니다.
 

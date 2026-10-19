@@ -35,6 +35,8 @@ template:
 fonts:
   # `latin` is used for Latin script and digits; `east_asian` for CJK text.
   # Pick fonts your audience has installed, or embed them in your template.
+  # Optional per role: `file` / `file_east_asian` = path to the .ttf/.otf, used
+  # to measure text exactly (otherwise the font fontconfig matches is measured).
   heading: { latin: Arial, east_asian: Malgun Gothic }
   body:    { latin: Arial, east_asian: Malgun Gothic }
   mono:    { latin: Consolas, east_asian: Malgun Gothic }

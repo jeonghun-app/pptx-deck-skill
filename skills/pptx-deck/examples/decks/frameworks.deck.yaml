@@ -28,6 +28,25 @@ slides:
       - What the pilot looks like
     notes: Three steps, in order.
 
+  - layout: summary
+    eyebrow: Summary
+    title: Automate invoice matching and ticket triage first
+    blocks:
+      - section: 1
+        points:
+          - "Two workflows combine high value with easy adoption"
+          - "Measured scores confirm both clear the thresholds"
+      - section: 2
+        points:
+          - "Buying a platform beats building on speed and risk"
+          - "Only one vendor meets every mandatory requirement"
+      - section: 3
+        points:
+          - "Three phases with one decision at the end"
+          - "Nine measures tracked every week"
+    so_what: Approve a two-quarter pilot for the two selected workflows
+    notes: The whole recommendation on one page; the sections follow in the same order.
+
   - layout: section
     number: 1
     title: Which workflows to start with
@@ -172,7 +191,7 @@ slides:
 
   - layout: shift
     eyebrow: Operating model
-    title: Five changes move the work from manual queues to assisted flow
+    title: Five changes move work from manual queues to assisted flow
     headers: [Today, Target]
     rows:
       - { dimension: Intake, from: "Requests arrive by **email**", to: "Requests arrive through **one form**" }

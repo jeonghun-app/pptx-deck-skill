@@ -10,7 +10,7 @@ from pptx import Presentation
 from pptx.enum.shapes import PP_PLACEHOLDER
 from pptx.util import Pt
 
-from . import story
+from . import measure, story
 from .brand import Brand, load_brand
 from .canvas import Canvas, Warnings
 from .layouts import LAYOUTS
@@ -187,6 +187,7 @@ def build(deck_path: str | Path, out_path: str | Path, brand_path: str | Path | 
         meta = {**meta, "mode": "present"}
     # read mode reserves a two-line title band on every content slide (story.frame_brand)
     brand = story.frame_brand(load_brand(brand_path), meta)
+    measure.set_fonts(brand)  # measure text with the fonts the deck will render in
 
     template = brand.path("template.path")
     if template:
